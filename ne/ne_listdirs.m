@@ -1,5 +1,6 @@
 function f = ne_listdirs( f, pdir, max_rows );
-if length(regexp(pdir,'[/\\]')) == 0
+[tok,rem] = strtok(pdir,'\/');
+if length(rem) == 0
   if exist(pdir,'file')
     newpdir = eval(pdir);
     if ~exist(newpdir,'dir')
@@ -19,7 +20,7 @@ files = files(flipud(ifiles));
 row = max_rows;
 dflt_set = 0;
 for file = files'
-  if file.isdir & length(regexp(file.name,'^[0-9]'))
+  if file.isdir & file.name(1) >= '0' & file.name(1) <= '9'
     if row == max_rows
       f = ne_dialg(f, 'newcol');
       row = 0;
