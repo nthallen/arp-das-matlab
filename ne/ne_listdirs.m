@@ -1,4 +1,15 @@
 function f = ne_listdirs( f, pdir, max_rows );
+if length(regexp(pdir,'[/\\]')) == 0
+  if exist(pdir,'file')
+    newpdir = eval(pdir);
+    if ~exist(newpdir,'dir')
+      error(sprintf('Function "%s" did not return a directory', pdir));
+    end
+    pdir = newpdir;
+  else
+    error(sprintf('You must define a function named "%s" to define the data directory', pdir));
+  end
+end
 files = dir( pdir );
 [ sfiles ifiles ] = sort({files.name});
 if size(ifiles,2) > 1
