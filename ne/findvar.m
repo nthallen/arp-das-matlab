@@ -24,8 +24,9 @@ for varstr = varargin
   end
   f = { f{:} found }';
   if length(found) == 0
-    errordlg([ 'Unable to locate variable ''' char(var) ''' in directory ''' ...
-              fdir '''' ] );
+    fprintf(1, 'Unable to locate variable ''%s'' in directory ''%s''\n', char(var), fdir );
+%    errordlg([ 'Unable to locate variable ''' char(var) ''' in directory ''' ...
+%              fdir '''' ] );
   end
 end
 % f = lower(f);

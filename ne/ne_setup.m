@@ -54,9 +54,9 @@ for i=reqd
   end
 end
 
-if success == 0
-  return
-end
+% if success == 0
+%   return
+% end
 
 if args.HoldFig == 0
   fg = figure;

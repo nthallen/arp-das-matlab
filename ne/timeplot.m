@@ -8,20 +8,25 @@ function h = timeplot(vars,ttl,ylab,leg,varargin);
 pat = [ getrundir filesep '*eng*.mat' ];
 reqd = findvar( pat, vars{:});
 args = ne_args(varargin{:});
-if ne_setup(reqd',args)
-  p = 'plot(';
-  for i = [1:length(vars)]
-    if i > 1
-      p = [ p ',' ];
-    end
-    [ ref, Tref ] = ne_varref( vars, reqd, i );
-    p = [ p Tref ',' ref ',''' args.linetype, '''' ];
+n_plots = 0;
+ne_setup(reqd',args);
+p = 'plot(';
+for i = [1:length(vars)]
+  [ ref, Tref ] = ne_varref( vars, reqd, i );
+  if n_plots > 0
+    p = [ p ',' ];
   end
+  p = [ p Tref ',' ref ',''' args.linetype, '''' ];
+  n_plots = n_plots+1;
+end
+if n_plots > 0
   p = [ p ')' ];
   % fprintf(1,'%s\n',p);
   hh = evalin('base',p);
-  if nargout > 0, h = hh; end
   grid;
-  
-  ne_cleanup( ttl, 'UTC Seconds since Midnight', ylab, leg, args );
+else
+  hh = [];
 end
+if nargout > 0, h = hh; end
+
+ne_cleanup( ttl, 'UTC Seconds since Midnight', ylab, leg, args );

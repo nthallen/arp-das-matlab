@@ -11,15 +11,12 @@ args = ne_args(varargin{:});
 offset = 1;
 labels = {};
 hh = [];
-if ne_setup(reqd',args)
-  for i = [1:size(vars,1)]
-    arcvar = reqd{i};
-    delim = max(findstr( arcvar, filesep ));
-    if ~isempty(delim)
-      arcvar = arcvar([delim+1:length(arcvar)]);
-    end
-    DS = evalin( 'base', [ arcvar '.' vars{i,2} ] );
-    DT = evalin( 'base', [ arcvar '.T' ] );
+ne_setup(reqd',args);
+for i = [1:size(vars,1)]
+  [ ref, Tref ] = ne_varref( { vars{:,2} }, reqd, i );
+  DS = evalin( 'base', ref );
+  DT = evalin( 'base', Tref );
+  if any(~isnan(DS))
     lDS = length(DS);
     DB = ((bitand(DS,2^vars{i,3}) > 0 )-.5)*(-.8) + offset;
     v = find(diff(DB));
@@ -31,12 +28,14 @@ if ne_setup(reqd',args)
     end
     hh = [ hh plot( DT([1; v(:); lDS]), DB([1; vv(:); lDS]), 'k' ) ];
     hold on;
-    labels{offset} = vars{i,1};
-    offset = offset + 1;
+  else
+    hh = [ hh plot( NaN, NaN ) ];
   end
-  hold off;
-  set(gca, 'YTick', [1:offset-1], 'YTickLabel', cellstr(labels), ...
-      'Ylim', [ .5 offset-.5 ], 'Ydir', 'reverse' );
-  ne_cleanup( ttl, 'UTC Seconds since Midnight', '', {}, args );
+  labels{offset} = vars{i,1};
+  offset = offset + 1;
 end
+hold off;
+set(gca, 'YTick', [1:offset-1], 'YTickLabel', cellstr(labels), ...
+  'Ylim', [ .5 offset-.5 ], 'Ydir', 'reverse' );
+ne_cleanup( ttl, 'UTC Seconds since Midnight', '', {}, args );
 if nargout > 0, h = hh; end
