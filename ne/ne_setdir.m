@@ -4,7 +4,7 @@ f = co;
 while length(f) == 1
   t = get(f,'type');
   if strcmp( t, 'figure')
-    set( f, 'UserData', dir );
+    set( f, 'UserData', dir, 'tag', 'eng_ui' );
     ch = findobj(f,'style','radiobutton')';
     for obj = ch;
       if obj ~= co, set(obj,'Value',0); end

@@ -77,7 +77,7 @@ if args.HoldFig == 0
       set(t,'FontUnits','normalized','FontSize',fontsize/PP(4));
     end
   end
-  set( fg, 'UserData', getrundir );
+  set( fg, 'UserData', getrundir, 'tag', 'eng_ui' );
   addzoom;
   h3 = uimenu('label','Edit');
   setuprop( fg, 'EditMenu', h3 );

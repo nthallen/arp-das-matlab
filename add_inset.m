@@ -1,4 +1,5 @@
 function [ xl, yl ] = add_inset;
+% [ xl, yl ] = add_inset;
 k = waitforbuttonpress;
 point1 = get(gca,'CurrentPoint');
 finalRect = rbbox;
