@@ -7,7 +7,7 @@ function [ ref, Tref ] = ne_varref( vars, reqd, i )
 % reference string associated with the appropriate time
 % variable.
 arcvar = reqd{i};
-delim = max(findstr( arcvar, '\' ));
+delim = max(findstr( arcvar, filesep ));
 if ~isempty(delim)
   arcvar = arcvar([delim+1:length(arcvar)]);
 end

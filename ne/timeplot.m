@@ -5,7 +5,7 @@ function h = timeplot(vars,ttl,ylab,leg,varargin);
 % ylab is the y label
 % leg is a cell array of legends for the vars
 % ... is any other 'standard' ne_args options
-pat = [ getrundir '\*eng*.mat' ];
+pat = [ getrundir filesep '*eng*.mat' ];
 reqd = findvar( pat, vars{:});
 args = ne_args(varargin{:});
 if ne_setup(reqd',args)

@@ -5,7 +5,7 @@ function h = ne_dstat( vars, ttl, varargin );
 % bit number (0-7 or so). e.g.
 % The var field contains the name of a TM variable.
 % h = ne_dstat( { 'ALmpS', 'DS802', 1; 'BLmpS', 'DS802', 2 }, 'Bits' );
-pat = [ getrundir '\*eng*.mat' ];
+pat = [ getrundir filesep '*eng*.mat' ];
 reqd = findvar( pat, vars{:,2});
 args = ne_args(varargin{:});
 offset = 1;
@@ -14,7 +14,7 @@ hh = [];
 if ne_setup(reqd',args)
   for i = [1:size(vars,1)]
     arcvar = reqd{i};
-    delim = max(findstr( arcvar, '\' ));
+    delim = max(findstr( arcvar, filesep ));
     if ~isempty(delim)
       arcvar = arcvar([delim+1:length(arcvar)]);
     end

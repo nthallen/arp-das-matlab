@@ -16,7 +16,7 @@ fontsize = 12;
 
 for i=reqd
   j = char(i);
-  delim = max(findstr( j, '\' ));
+  delim = max(findstr( j, filesep ));
   if isempty(delim)
     fdir = '.';
   else
@@ -31,9 +31,9 @@ for i=reqd
       jloaddir = evalin('base', [ j '.fdir' ]);
       jloaded = strcmp( jloaddir, fdir );
     end
-	if jloaded ~= 1 & exist( [ fdir '\' j '.mat']) == 2
+	if jloaded ~= 1 & exist( [ fdir filesep j '.mat']) == 2
 	  evalin( 'base', [ 'global ' j ';' ] );
-	  eval( [ 'global ' j '; ' j ' = load( ''' fdir '\' j '.mat' ''');' ] );
+	  eval( [ 'global ' j '; ' j ' = load( ''' fdir filesep j '.mat' ''');' ] );
 	  if eval( [ 'isfield( ' j ', [ ''T'' j ] )' ] )
 		T = eval( [ j '.T' j ] );
 		T0 = floor(T(1)/(86400)) * 86400;

@@ -1,7 +1,7 @@
 function f = findvar( files, varargin );
 % f = findvar( files, varargin );
 
-delim = max(findstr( files, '\' ));
+delim = max(findstr( files, filesep ));
 if isempty(delim)
   fdir = '.';
 else
@@ -13,7 +13,7 @@ for varstr = varargin
   var = strtok( char(varstr), '/*+-' );
   found = '';
   for file = { D.name };
-    cfile = [ fdir '\' char(file) ];
+    cfile = [ fdir filesep char(file) ];
     vars = who('-file', cfile );
     if any(strcmpi( var, vars ))
       found = cfile;

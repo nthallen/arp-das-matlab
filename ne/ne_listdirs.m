@@ -25,9 +25,9 @@ for file = files'
       row = 0;
     end
     f = ne_dialg(f, 'add', 0, ( -1 - dflt_set ), ...
-      [ 'ne_setdir(''' pdir '\' file.name ''');' ], file.name );
+      [ 'ne_setdir(''' pdir filesep file.name ''');' ], file.name );
     if ~dflt_set
-      set( f.fig, 'UserData', [ pdir '\' file.name ] );
+      set( f.fig, 'UserData', [ pdir filesep file.name ] );
       dflt_set = 1;
     end
     row = row + 1;
