@@ -22,8 +22,9 @@ end
 
 % Do this before we obliterate the ttl
 cstack = dbstack;
-if length(cstack) >= 3
-  caller = cstack(3).name;
+sti = min( 3, length(cstack) );
+if sti > 1
+  caller = cstack(sti).name;
   ci = 1+max(findstr('\', caller));
   cj = length(caller)-2;
   callfunc = caller([ci:cj]);

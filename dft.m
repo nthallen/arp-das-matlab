@@ -10,7 +10,7 @@ if size(X,2) == 1
 else
   dx = 1;
 end
-if size(Y,2)
+if size(Y,2) == 1
   dy = 0;
 else
   dy = 1;

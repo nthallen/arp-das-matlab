@@ -14,12 +14,8 @@ if ne_setup(reqd',args)
     if i > 1
       p = [ p ',' ];
     end
-    arcvar = reqd{i};
-    delim = max(findstr( arcvar, '\' ));
-    if ~isempty(delim)
-      arcvar = arcvar([delim+1:length(arcvar)]);
-    end
-    p = [ p arcvar '.T,' arcvar '.' vars{i} ',''' args.linetype, '''' ];
+    [ ref, Tref ] = ne_varref( vars, reqd, i );
+    p = [ p Tref ',' ref ',''' args.linetype, '''' ];
   end
   p = [ p ')' ];
   % fprintf(1,'%s\n',p);

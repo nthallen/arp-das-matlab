@@ -104,6 +104,9 @@ C = get(H, 'Color' );
 set(H, 'Xtick', [], 'Ytick', [], 'XColor', C, 'YColor', C );
 if printing
   set(H, 'PlotBoxAspectRatio', [ LAP(3)*PP(3) LAP(4)*PP(4) 1 ]);
+else
+  set(H, 'Units', 'Points' );
+  % set(H,'ResizeFcn','nlegend_rs','UserData',[ a Pos ] )
 end
 
 % Restore units to axes, figure
