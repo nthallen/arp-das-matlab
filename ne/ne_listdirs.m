@@ -19,7 +19,7 @@ files = files(flipud(ifiles));
 row = max_rows;
 dflt_set = 0;
 for file = files'
-  if file.name(1) ~= '.' & file.isdir
+  if file.isdir & length(regexp(file.name,'^[0-9]'))
     if row == max_rows
       f = ne_dialg(f, 'newcol');
       row = 0;
