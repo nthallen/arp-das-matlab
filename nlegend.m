@@ -81,12 +81,13 @@ set(H,'Units','normalized');
 th = text( zeros(1,na), zeros(1,na), char(Txt{:}) );
 set(th,'FontUnits','normalized','FontSize', 1/axissize );
 xwd1 = LAP(3)/(nfontwd*AP(3)); % current legend width in characters
+% set the Data units to 'characters'
 set(H,'Xlim',[0 xwd1],'Ylim',[ -axissize/2 axissize/2 ]);
 ex = zeros(na,4);
 for i=[1:na]
   ex(i,:) = get(th(i),'Extent'); % Data units which should be characters
 end
-txpos = [ 0; cumsum(ex(:,3)) ]'; % what units?
+txpos = [ 0; cumsum(ex(:,3)) ]'; % characters
 cellsize = (linelength+3*linespace); % characters
 lposa = [0:na]*cellsize + txpos;
 lpos = lposa([1:na]);
@@ -115,10 +116,11 @@ set(H, 'Xtick', [], 'Ytick', [], 'XColor', C, 'YColor', C );
 set(a,'Units',AU);
 
 if printing
-  FU = get(f,'Units');
-  set(f,'Units','Points');
-  set(H, 'PlotBoxAspectRatio', [ LAP(3)*PP(3) LAP(4)*PP(4) 1 ]);
-  set(f,'Units',FU);
+  set(H, 'Units','Points')
+  LAPP = get(H,'Position');
+  % set(H, 'PlotBoxAspectRatio', [ LAP(3)*PP(3) LAP(4)*PP(4) 1 ]);
+  set(H, 'PlotBoxAspectRatio', [ LAPP(3) LAPP(4) 1 ]);
+  set(H,'Units','normalized');
 else
   set(H, 'Units', 'Points', 'UserData', struct('parent', a, 'Pos', Pos ));
   set(f, 'ResizeFcn', 'nlegend_rs' );
