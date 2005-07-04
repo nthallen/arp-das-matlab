@@ -8,11 +8,12 @@ if nargin<1
 end
 xl = xlim;
 for i=ax
-  % Tag 'legend' is set by legend and nlegend
+  % Tag 'legend' is set by legend
+  % Tag 'nlegend' is set by nlegend
   % Tab 'background' is set by ne_setup
   tag = get(i,'Tag');
-  if ~strcmp(tag,'legend') & ~strcmp(tag,'background')
-    set(i,'XLim',xl,'YLimmode','auto');
+  if ~strcmp(tag,'legend') & ~strcmp(tag,'nlegend') & ~strcmp(tag,'background')
+    set(i, 'XLim', xl );
   end
 end
 shg;
