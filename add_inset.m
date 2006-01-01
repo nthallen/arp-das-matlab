@@ -1,4 +1,4 @@
-function [ xl, yl ] = add_inset;
+function [ xl, yl ] = add_inset( color );
 % [ xl, yl ] = add_inset;
 k = waitforbuttonpress;
 point1 = get(gca,'CurrentPoint');
@@ -14,7 +14,8 @@ xl = [ p1(1) p1(1)+offset(1) ];
 yl = [ p1(2) p1(2)+offset(2) ];
 hold on
 axis manual
-plot(x,y,'k')                            % redraw in dataspace units
+h = plot(x,y,'k')                            % redraw in dataspace units
+if nargin; set(h,'color',color); end
 k = waitforbuttonpress;
 point3 = get(gca,'CurrentPoint');
 finalRect = rbbox;
@@ -32,23 +33,27 @@ do = offset-offset3;
 dx = [ 1 0 ];
 dy = [ 0 1 ];
 if prod(dp) <= 0
-  conn_line(p1, p3);
+  h = conn_line(p1, p3);
+  if nargin; set(h,'color',color); end
 end
 if prod(dp + dy.*do) >= 0
-  conn_line(p1+dy.*offset, p3+dy.*offset3);
+  h = conn_line(p1+dy.*offset, p3+dy.*offset3);
+  if nargin; set(h,'color',color); end
 end
 if prod(dp + dx.*do) >= 0
-  conn_line(p1+dx.*offset, p3+dx.*offset3);
+  h = conn_line(p1+dx.*offset, p3+dx.*offset3);
+  if nargin; set(h,'color',color); end
 end
 if prod(dp + do) <= 0
-  conn_line(p1+offset, p3+offset3);
+  h = conn_line(p1+offset, p3+offset3);
+  if nargin; set(h,'color',color); end
 end
 hold off
 wp = get(gcf,'Position');
 normRect = finalRect ./ [ wp(3) wp(4) wp(3) wp(4) ];
 axes('position', normRect );
 
-function conn_line( p1, p2 )
+function h = conn_line( p1, p2 )
   x = [p1(1) p2(1)];
   y = [p1(2) p2(2)];
   p = [0 1];
@@ -56,5 +61,5 @@ function conn_line( p1, p2 )
   r = [ s 1-s ];
   x1 = interp1( p, x, r );
   y1 = interp1( p, y, r );
-  plot(x1,y1,'k');
+  h = plot(x1,y1,'k');
   return;
