@@ -24,12 +24,9 @@ end
 cstack = dbstack;
 sti = min( 3, length(cstack) );
 if sti > 1
-  caller = cstack(sti).name;
-  ci = 1+max(findstr(filesep, caller));
-  cj = length(caller)-2;
-  callfunc = caller([ci:cj]);
+  callfunc = cstack(sti).name;
   cm = getuprop(gcf,'EditMenu');
-  uimenu(cm,'Label', ttl, 'Callback', [ 'edit ' caller ] );
+  uimenu(cm,'Label', ttl, 'Callback', [ 'edit ' callfunc ] );
   cm = getuprop(gcf,'ExpandMenu');
   uimenu(cm,'Label', ttl, 'Callback', [ callfunc '(''Zoom'');' ] );
 end
