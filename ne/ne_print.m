@@ -19,6 +19,6 @@ for i = k
   end
   % disp(p);
   eval(p);
-  print -dwinc
+  print( f, '-dwinc');
   delete(f);
 end
