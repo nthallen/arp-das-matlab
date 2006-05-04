@@ -5,7 +5,7 @@ if nargin < 1
   noheader = 0;
 end
 run = getrundir;
-m = max(findstr('\',run))+1;
+m = max(findstr(filesep,run))+1;
 run = run([m:length(run)]);
 if noheader == 0
   if run(length(run)) == 'F'
