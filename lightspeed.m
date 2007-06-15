@@ -10,4 +10,4 @@ if nargin < 2
     length = 1e-2; % cm
   end
 end
-c = 2.99792458e12 * length/duration;
+c = 2.99792458e8 * duration/length;
