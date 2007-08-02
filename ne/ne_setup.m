@@ -80,9 +80,9 @@ if args.HoldFig == 0
   set( fg, 'UserData', getrundir, 'tag', 'eng_ui' );
   addzoom;
   h3 = uimenu('label','Edit');
-  setuprop( fg, 'EditMenu', h3 );
+  setappdata( fg, 'EditMenu', h3 );
   h4 = uimenu('label','Expand');
-  setuprop( fg, 'ExpandMenu', h4 );
+  setappdata( fg, 'ExpandMenu', h4 );
 else
   fg = gcf;
 end

@@ -47,7 +47,7 @@ for ix = [1:nplots]
 end
 cstack = dbstack;
 caller = cstack(2).name;
-cm = getuprop(gcf,'EditMenu');
+cm = getappdata(gcf,'EditMenu');
 uimenu(cm,'Label', [ ttl ' Group' ], 'Callback', [ 'edit ' caller ] );
 
 figout = gcf;

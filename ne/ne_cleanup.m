@@ -25,9 +25,9 @@ cstack = dbstack;
 sti = min( 3, length(cstack) );
 if sti > 1
   callfunc = cstack(sti).name;
-  cm = getuprop(gcf,'EditMenu');
+  cm = getappdata(gcf,'EditMenu');
   uimenu(cm,'Label', ttl, 'Callback', [ 'edit ' callfunc ] );
-  cm = getuprop(gcf,'ExpandMenu');
+  cm = getappdata(gcf,'ExpandMenu');
   uimenu(cm,'Label', ttl, 'Callback', [ callfunc '(''Zoom'');' ] );
 end
 if isfield( args, 'Title' )
