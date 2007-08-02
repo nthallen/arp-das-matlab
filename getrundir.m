@@ -1,7 +1,7 @@
 function run = getrundir;
 run = '';
 co = get(0,'callbackobject');
-while length(co) == 1
+while ~isempty(co) % && isobject(co)
   t = [ get(co,'type') '/' get(co,'tag') ];
   if strcmp( t, 'figure/eng_ui')
     run = get( co, 'UserData' );
