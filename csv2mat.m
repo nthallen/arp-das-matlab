@@ -22,4 +22,5 @@ for i = 1:length(files)
     end
     save(ofile,'-struct','data');
     fprintf(1,'Converted %s to %s\n', ifile, ofile);
+    data = [];
 end
