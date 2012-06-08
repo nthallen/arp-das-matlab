@@ -37,5 +37,5 @@ end
 hold off;
 set(gca, 'YTick', [1:offset-1], 'YTickLabel', cellstr(labels), ...
   'Ylim', [ .5 offset-.5 ], 'Ydir', 'reverse' );
-ne_cleanup( ttl, 'UTC Seconds since Midnight', '', {}, args );
+ne_cleanup( ttl, 'UTC Seconds since Midnight', '', {}, args, hh );
 if nargout > 0, h = hh; end

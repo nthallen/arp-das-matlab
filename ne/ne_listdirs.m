@@ -4,11 +4,32 @@ if length(rem) == 0
   if exist(pdir,'file')
     newpdir = eval(pdir);
     if ~exist(newpdir,'dir')
-      error(sprintf('Function "%s" did not return a directory', pdir));
+      warning(sprintf('Function "%s" did not return a directory', pdir));
+      return;
     end
     pdir = newpdir;
   else
-    error(sprintf('You must define a function named "%s" to define the data directory', pdir));
+    set(f.fig, 'visible', 'off');
+    newpdir = uigetdir([], 'Where are run directories located?');
+    set(f.fig, 'visible', 'on');
+    if isnumeric(newpdir)
+      warning('No directory selected, no data will be viewable');
+      return;
+    end
+    if ~exist(newpdir,'dir')
+      warning(sprintf('uigetdir did not return a directory', pdir));
+      return;
+    end
+    ST = dbstack(1,'-completenames');
+    [exppath,n,e,] = fileparts(ST.file);
+    newfile = fullfile(exppath, [ pdir '.m']);
+    nfd = fopen(newfile,'w');
+    fprintf(nfd,'function path = %s\n', pdir);
+    fprintf(nfd,'%% path = %s;\n', pdir);
+    fprintf(nfd,'path = ''%s'';\n', newpdir);
+    fclose(nfd);
+    pdir = newpdir;
+    % error(sprintf('You must define a function named "%s" to define the data directory', pdir));
   end
 end
 files = dir( pdir );

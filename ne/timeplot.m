@@ -29,4 +29,4 @@ else
 end
 if nargout > 0, h = hh; end
 
-ne_cleanup( ttl, 'UTC Seconds since Midnight', ylab, leg, args );
+ne_cleanup( ttl, 'UTC Seconds since Midnight', ylab, leg, args, hh );

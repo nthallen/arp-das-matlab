@@ -1,4 +1,4 @@
-function ne_cleanup( ttl, xlab, ylab, leg, args );
+function ne_cleanup( ttl, xlab, ylab, leg, args, hh );
 % ne_cleanup2( ttl, xlab, ylab, leg, args );
 % leg = { 'label', 'label', ... };
 % leg = { [ x y xo, yo ], 'label', ... };
@@ -26,7 +26,7 @@ sti = min( 3, length(cstack) );
 if sti > 1
   callfunc = cstack(sti).name;
   cm = getappdata(gcf,'EditMenu');
-  uimenu(cm,'Label', ttl, 'Callback', [ 'edit ' callfunc ] );
+  uimenu(cm,'Label', ttl, 'Callback', [ 'ne_edit ' callfunc ] );
   cm = getappdata(gcf,'ExpandMenu');
   uimenu(cm,'Label', ttl, 'Callback', [ callfunc '(''Zoom'');' ] );
 end
@@ -56,4 +56,8 @@ if printing
 end
 if length(leg) > 0
   nlegend(leg{:});
+end
+custfunc = ['cust_' callfunc];
+if exist(custfunc,'file') == 2
+    eval([custfunc '(hh);']);
 end
