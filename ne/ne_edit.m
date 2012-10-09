@@ -7,8 +7,10 @@ if isempty(src)
     errordlg(sprintf('Unable to locate function ''%s''', funcname));
     return;
 end
-[srcpath,n,e] = fileparts(src);
-cfunc = ['cust_' n];
+[srcpath,cfunc,e] = fileparts(src);
+if strncmp(cfunc, 'cust_', 5) == 0
+    cfunc = ['cust_' cfunc];
+end
 dest = fullfile(srcpath, [cfunc '.m']);
 if ~exist(dest,'file')
     ifd = fopen(src);
