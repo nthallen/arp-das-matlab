@@ -8,11 +8,11 @@ co = get(0,'callbackobject');
 while ~isempty(co)
     try
       t = [ get(co,'type') '/' get(co,'tag') ];
-      if strcmp( t, 'figure/eng_ui')
-        run = get( co, 'UserData' );
+      if strcmp(t, 'figure/eng_ui') || strcmp(t, 'figure/scan_viewer')
+        run = get(co, 'UserData');
         break;
       end
-      co = get( co, 'Parent' );
+      co = get(co, 'Parent');
     catch err
       break;
     end
