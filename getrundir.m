@@ -1,10 +1,12 @@
-function run = getrundir
+function run = getrundir(co)
 run = '';
 % Special case for engineering plots: check for UserData in
 % the figure containing the callbackobject. Fails for
 % scan_viewer with a listener on slider value since the value
 % object does not have a type nor a parent.
-co = get(0,'callbackobject');
+if nargin < 1
+    co = gcbo;
+end
 while ~isempty(co)
     try
       t = [ get(co,'type') '/' get(co,'tag') ];

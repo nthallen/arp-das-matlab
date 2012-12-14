@@ -1,10 +1,13 @@
-function run = getrun(noheader)
+function run = getrun(noheader, co)
 % run = getrun([noheader])
 %  Extracts the run from the current working directory.
-if nargin < 1
-  noheader = 0;
+if nargin < 2
+    co = gcbo;
+    if nargin < 1
+      noheader = 0;
+    end
 end
-run = getrundir;
+run = getrundir(co);
 m = max(findstr(filesep,run))+1;
 run = run([m:length(run)]);
 if noheader == 0
