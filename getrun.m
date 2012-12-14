@@ -1,6 +1,8 @@
 function run = getrun(noheader, co)
-% run = getrun([noheader])
+% run = getrun([noheader[, callbackobject]])
 %  Extracts the run from the current working directory.
+%  Callback Object may be explicitly specified for more
+%  reliable results.
 if nargin < 2
     co = gcbo;
     if nargin < 1

@@ -1,9 +1,10 @@
 function run = getrundir(co)
 run = '';
-% Special case for engineering plots: check for UserData in
-% the figure containing the callbackobject. Fails for
-% scan_viewer with a listener on slider value since the value
-% object does not have a type nor a parent.
+% run = getrundir([callbackObject]);
+% Determines run based on the current directory. If
+% callbackObject is given or gcbo returns an object and
+% the containing figure has the tag 'eng_ui' or 'scan_viewer',
+% the directory is read from the figure's UserData.
 if nargin < 1
     co = gcbo;
 end
