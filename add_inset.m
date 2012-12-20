@@ -1,8 +1,9 @@
-function [ xl, yl ] = add_inset( color );
-% [ xl, yl ] = add_inset;
-k = waitforbuttonpress;
+function [ xl, yl, hh ] = add_inset( color )
+% [ xl, yl, hh ] = add_inset;
+% hh is a graphics handle for the newly created axes
+waitforbuttonpress;
 point1 = get(gca,'CurrentPoint');
-finalRect = rbbox;
+rbbox;
 point2 = get(gca,'CurrentPoint');
 point1 = point1(1,1:2);              % extract x and y
 point2 = point2(1,1:2);
@@ -14,9 +15,9 @@ xl = [ p1(1) p1(1)+offset(1) ];
 yl = [ p1(2) p1(2)+offset(2) ];
 hold on
 axis manual
-h = plot(x,y,'k')                            % redraw in dataspace units
+h = plot(x,y,'k');                    % redraw in dataspace units
 if nargin; set(h,'color',color); end
-k = waitforbuttonpress;
+waitforbuttonpress;
 point3 = get(gca,'CurrentPoint');
 finalRect = rbbox;
 point4 = get(gca,'CurrentPoint');
@@ -24,8 +25,8 @@ point3 = point3(1,1:2);              % extract x and y
 point4 = point4(1,1:2);
 p3 = min(point3,point4);             % calculate locations
 offset3 = abs(point3-point4);         % and dimensions
-x = [p3(1) p3(1)+offset3(1) p3(1)+offset3(1) p3(1) p3(1)];
-y = [p3(2) p3(2) p3(2)+offset3(2) p3(2)+offset3(2) p3(2)];
+% x = [p3(1) p3(1)+offset3(1) p3(1)+offset3(1) p3(1) p3(1)];
+% y = [p3(2) p3(2) p3(2)+offset3(2) p3(2)+offset3(2) p3(2)];
 % plot(x,y); % just for testing
 
 dp = p1-p3;
@@ -51,7 +52,10 @@ end
 hold off
 wp = get(gcf,'Position');
 normRect = finalRect ./ [ wp(3) wp(4) wp(3) wp(4) ];
-axes('position', normRect );
+h = axes('position', normRect );
+if nargout >= 3
+    hh = h;
+end
 
 function h = conn_line( p1, p2 )
   x = [p1(1) p2(1)];
