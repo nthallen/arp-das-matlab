@@ -1,11 +1,11 @@
-function f = findvar( files, varargin );
+function f = findvar(files, varargin)
 % f = findvar( files, varargin );
 
-delim = max(findstr( files, filesep ));
+delim = find(files == filesep, 1, 'last');
 if isempty(delim)
   fdir = '.';
 else
-  fdir = files([1:delim-1]);
+  fdir = files(1:delim-1);
 end
 D = dir(files);
 f = {};
@@ -18,18 +18,17 @@ for varstr = varargin
     if any(strcmpi( var, vars ))
       found = cfile;
     end
-	if length(found) > 0
+	if ~isempty(found)
 	  break;
 	end
   end
-  f = { f{:} found }';
-  if length(found) == 0
+  f = [ f {found} ];
+  if isempty(found)
     fprintf(1, 'Unable to locate variable ''%s'' in directory ''%s''\n', char(var), fdir );
-%    errordlg([ 'Unable to locate variable ''' char(var) ''' in directory ''' ...
-%              fdir '''' ] );
   end
 end
 % f = lower(f);
 % f = strrep(lower(f),'.mat','');
 f = strrep( f,'.mat','');
 f = strrep( f, '.MAT', '');
+f = f';

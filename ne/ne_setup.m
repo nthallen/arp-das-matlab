@@ -1,4 +1,4 @@
-function success = ne_setup(reqd,args);
+function [ success, axx ] = ne_setup(reqd,args)
 %ne_setup.m Create the designated axis based on the args
 %structure (produced from ne_args()).
 
@@ -16,14 +16,14 @@ fontsize = 12;
 
 for i=reqd
   j = char(i);
-  delim = max(findstr( j, filesep ));
+  delim = find(j == filesep, 1, 'last');
   if isempty(delim)
     fdir = '.';
   else
-    fdir = j([1:delim-1]);
-    j = j([delim+1:length(j)]);
+    fdir = j(1:delim-1);
+    j = j(delim+1:length(j));
   end
-  if length(j) == 0
+  if isempty(j)
     success = 0;
   else
     jloaded = evalin('base', [ 'exist(''' j ''', ''var'')' ] );
@@ -31,7 +31,7 @@ for i=reqd
       jloaddir = evalin('base', [ j '.fdir' ]);
       jloaded = strcmp( jloaddir, fdir );
     end
-	if jloaded ~= 1 & exist( [ fdir filesep j '.mat']) == 2
+	if jloaded ~= 1 && exist( [ fdir filesep j '.mat'],'file') == 2
 	  evalin( 'base', [ 'global ' j ';' ] );
 	  eval( [ 'global ' j '; ' j ' = load( ''' fdir filesep j '.mat' ''');' ] );
 	  if eval( [ 'isfield( ' j ', [ ''T'' j ] )' ] )
@@ -48,7 +48,7 @@ for i=reqd
 	end
 	jloaded = evalin('base', [ 'exist(''' j ''', ''var'')' ] );
 	if jloaded ~= 1
-	  warning(['Unable to load required matrix: ' j ] );
+	  warning('HUARP:GENUI', 'Unable to load required matrix: %s', j );
 	  success = 0;
 	end
   end
@@ -78,16 +78,17 @@ if args.HoldFig == 0
     end
   end
   set( fg, 'UserData', getrundir, 'tag', 'eng_ui' );
-  addzoom;
+  addzoom(0,1);
   h3 = uimenu('label','Edit');
   setappdata( fg, 'EditMenu', h3 );
   h4 = uimenu('label','Expand');
   setappdata( fg, 'ExpandMenu', h4 );
-else
-  fg = gcf;
 end
 if isfield(args, 'Position')
   ax = axes('position', args.Position );
 else
   ax = axes;
+end
+if nargout > 1
+  axx = ax;
 end

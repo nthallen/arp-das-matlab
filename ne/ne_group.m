@@ -1,4 +1,4 @@
-function figout = ne_group( printopt, ttl, varargin );
+function figout = ne_group( printopt, ttl, varargin )
 % figout = ne_group( printopt, ttl, plotname, ... );
 % printopt is a cell array of options to be passed to
 % each of the plot routines.
@@ -20,7 +20,7 @@ function figout = ne_group( printopt, ttl, varargin );
 % 'YRight'/'YLeft'
 
 Fig = {};
-if length(ttl) > 0
+if ~isempty(ttl)
   Ttl = { 'Title', ttl };
 else
   Ttl = {};
@@ -40,14 +40,19 @@ for ix = [1:nplots]
     HideX = {};
   end
   YPos = ypos{mod(ix,2)+1};
-  call = [ varargin{ix} ...
-      '( ''Position'', position, HideX{:},' ...
-      'YPos, Ttl{:}, Fig{:}, printopt{:} );' ];
-  eval( call );
+  call = eval(['@' varargin{ix}]);
+  call( 'Position', position, HideX{:}, YPos, Ttl{:}, Fig{:}, printopt{:});
+%   call = [ varargin{ix} ...
+%       '( ''Position'', position, HideX{:},' ...
+%       'YPos, Ttl{:}, Fig{:}, printopt{:} );' ];
+%   eval( call );
 end
+
 cstack = dbstack;
 caller = cstack(2).name;
 cm = getappdata(gcf,'EditMenu');
 uimenu(cm,'Label', [ ttl ' Group' ], 'Callback', [ 'edit ' caller ] );
 
 figout = gcf;
+ax = findobj(figout,'type','axes','Tag','');
+linkaxes(ax,'x');

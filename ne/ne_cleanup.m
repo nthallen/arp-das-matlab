@@ -1,4 +1,4 @@
-function ne_cleanup( ttl, xlab, ylab, leg, args, hh );
+function ne_cleanup( ttl, xlab, ylab, leg, args, hh )
 % ne_cleanup2( ttl, xlab, ylab, leg, args );
 % leg = { 'label', 'label', ... };
 % leg = { [ x y xo, yo ], 'label', ... };
@@ -34,7 +34,7 @@ if isfield( args, 'Title' )
   ttl = args.Title;
 end
 texts = [];
-if length(ttl) > 0
+if ~isempty(ttl)
   title(ttl);
   texts = [ texts get(ax,'Title') ];
   set(fg,'Name',ttl,'Numbertitle','off');
@@ -54,10 +54,12 @@ if printing
     set(t,'FontUnits','normalized','FontSize',fontsize/(AP(4)*PP(4)));
   end
 end
-if length(leg) > 0
+if ~isempty(leg)
   nlegend(leg{:});
 end
 custfunc = ['cust_' callfunc];
 if exist(custfunc,'file') == 2
-    eval([custfunc '(hh);']);
+    call = eval(['@' custfunc]);
+    call(hh);
+    % eval([custfunc '(hh);']);
 end

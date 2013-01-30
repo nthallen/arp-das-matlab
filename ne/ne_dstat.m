@@ -1,4 +1,4 @@
-function h = ne_dstat( vars, ttl, varargin );
+function [h, ax] = ne_dstat( vars, ttl, varargin )
 % h = ne_dstat( vars, varargin );
 % vars is a cell array with columns for 'mnemonic', 'var' and 'bit'.
 % The mnemonic is the bit mnemonic and bit is the
@@ -11,16 +11,16 @@ args = ne_args(varargin{:});
 offset = 1;
 labels = {};
 hh = [];
-ne_setup(reqd',args);
-for i = [1:size(vars,1)]
-  [ ref, Tref ] = ne_varref( { vars{:,2} }, reqd, i );
+[~,axx] = ne_setup(reqd',args);
+for i = 1:size(vars,1)
+  [ ref, Tref ] = ne_varref( vars(:,2)', reqd, i ); % was vars{:,2}
   DS = evalin( 'base', ref );
   DT = evalin( 'base', Tref );
   if any(~isnan(DS))
     lDS = length(DS);
     DB = ((bitand(DS,2^vars{i,3}) > 0 )-.5)*(-.8) + offset;
     v = find(diff(DB));
-    if length(v) > 0
+    if ~isempty(v)
       v = ((v+1)*[1 1])';
       vv = v - [1 0]'*ones(1,size(v,2));
     else
@@ -35,7 +35,9 @@ for i = [1:size(vars,1)]
   offset = offset + 1;
 end
 hold off;
-set(gca, 'YTick', [1:offset-1], 'YTickLabel', cellstr(labels), ...
+set(gca, 'YTick', 1:offset-1, 'YTickLabel', cellstr(labels), ...
   'Ylim', [ .5 offset-.5 ], 'Ydir', 'reverse' );
 ne_cleanup( ttl, 'UTC Seconds since Midnight', '', {}, args, hh );
 if nargout > 0, h = hh; end
+if nargout > 1, ax = axx; end
+
