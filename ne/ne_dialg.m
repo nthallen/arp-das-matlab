@@ -1,4 +1,4 @@
-function f = ne_dialg( ttl, func, lvl, prt, callback, title, varargin );
+function f = ne_dialg( ttl, func, lvl, prt, callback, title, varargin )
 % Set up a dialog window with an appropriate title
 % f = ne_dialg( 'title' );
 % f = ne_dialg( f, 'newcol' );
@@ -9,7 +9,6 @@ ytop = 20;
 xindent = 20;
 boxdim = 14;
 boxwid = 20;
-do_chkboxes = 1;
 if nargin == 0
   error('Arguments required for ne_dialg()');
 elseif nargin == 1
@@ -47,11 +46,11 @@ if strcmp(func,'add');
     style = 'Pushbutton';
   end
   h = uicontrol( f.fig, 'Style', style, 'String', title, ...
-         'Callback', callback,    'HorizontalAlignment', 'left' );
+         'Callback', callback, 'HorizontalAlignment', 'left', varargin{:} );
   e = get(h, 'Extent' );
   if prt < 0, e(3) = e(3) + boxdim; end
   % dims = ceil(e([3:4])*1.1);
-  dims = e([3:4]) + [ 3 3 ];
+  dims = e(3:4) + [ 3 3 ];
   f.y = f.y - dims(2) - ypad;
   if lvl == 0
     f.y = f.y - 2*ypad;
@@ -80,7 +79,7 @@ elseif strcmp(func,'newcol')
   k = findobj(f.fig,'style','pushbutton');
   for i = k';
     p = get(i,'Position');
-    if p(1) >= f.x & p(1) < f.xmax
+    if p(1) >= f.x && p(1) < f.xmax
       p(3) = f.xmax - xpad - p(1);
       set(i,'Position', p);
     end
@@ -106,7 +105,7 @@ elseif strcmp(func,'resize')
   e = get(h,'Extent');
   x = (f.xmax - e(3))/2;
   y = f.ymin;
-  dims = ceil(e([3:4])*1.1);
+  dims = ceil(e(3:4)*1.1);
   if ce(1)+ce(3)+xpad >= x
     x = ce(1)+ce(3)+xpad;
   end
