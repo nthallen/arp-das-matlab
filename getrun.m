@@ -18,6 +18,4 @@ if noheader == 0
   else
     run = [ 'Run ' run ];
   end
-elseif run(length(run)) == 'F'
-  run = run(1:length(run)-1);
 end

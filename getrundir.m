@@ -1,10 +1,10 @@
 function run = getrundir(co)
-run = '';
 % run = getrundir([callbackObject]);
 % Determines run based on the current directory. If
 % callbackObject is given or gcbo returns an object and
 % the containing figure has the tag 'eng_ui' or 'scan_viewer',
 % the directory is read from the figure's UserData.
+run = '';
 if nargin < 1
     co = gcbo;
 end
