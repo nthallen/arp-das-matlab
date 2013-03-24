@@ -7,7 +7,7 @@ function [ ref, Tref ] = ne_varref( vars, reqd, i )
 % reference string associated with the appropriate time
 % variable.
 arcvar = reqd{i};
-if length(arcvar) == 0
+if isempty(arcvar)
   ref = 'NaN';
   if nargout > 1
     Tref = 'NaN';

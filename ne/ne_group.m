@@ -56,3 +56,5 @@ uimenu(cm,'Label', [ ttl ' Group' ], 'Callback', [ 'edit ' caller ] );
 figout = gcf;
 ax = findobj(figout,'type','axes','Tag','');
 linkaxes(ax,'x');
+set(ax,'XLimMode','auto');
+

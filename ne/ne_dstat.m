@@ -28,8 +28,6 @@ for i = 1:size(vars,1)
     end
     hh = [ hh plot( DT([1; v(:); lDS]), DB([1; vv(:); lDS]), 'k' ) ];
     hold on;
-  else
-    hh = [ hh plot( NaN, NaN ) ];
   end
   labels{offset} = vars{i,1};
   offset = offset + 1;
