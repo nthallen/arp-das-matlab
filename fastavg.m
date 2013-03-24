@@ -1,19 +1,24 @@
-function avgout = fastavg( data, binsize )
+function [avgout, std] = fastavg( data, binsize )
 % function avgout = fastavg( data, binsize )
 % data is a row or column vector
 % binsize is an integer specifying how many points to average
 % avgout is a column vector
-[x y]=size(data);
-if x>1
+if size(data,1)>1
    data=data';
 end
 small = length(data) + 1;
 big = binsize * ceil(length(data)/binsize);
 data(small:big) = nan * (small:big);
 p = reshape( data, binsize, length(data)/binsize);
-so = sum(~isnan(p));
-i = find(isnan(p));
-p(i) = 0 * i;
+v = isnan(p);
+so = sum(~v);
+% i = find(isnan(p));
+p(v) = 0;
 soz = ( so == 0 );
-avgout = ( sum(p)./ ( so + soz ) )';
-avgout(find(soz)) = NaN;
+so = so + soz; % prevent divide by zero
+avgout = ( sum(p)./so )';
+avgout(soz) = NaN;
+if nargin > 1
+    std = sqrt(sum(p.*p)./so - avgout'.^2);
+    std(soz) = NaN;
+end
