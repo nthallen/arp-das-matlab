@@ -55,7 +55,11 @@ if strcmp(func,'add');
   %   prt > 0 means the graph is selected by default
   if prt < 0
     style = 'Radiobutton';
-    bbg = f.panelbg;
+    if isempty(f.panel)
+      bbg = f.figbg;
+    else
+      bbg = f.panelbg;
+    end
   else
     style = 'Pushbutton';
     bbg = f.figbg;
