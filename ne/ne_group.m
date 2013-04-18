@@ -30,7 +30,7 @@ HideX = { 'HideX' };
 nplots = length(varargin);
 ypos = { 'YRight', 'YLeft' };
 
-for ix = [1:nplots]
+for ix = 1:nplots
   position = nsubpos( nplots, 1, ix, 1 );
   if ix > 1
     Ttl = { 'Title', '' };

@@ -1,14 +1,14 @@
-function ne_print;
+function ne_print
 % ne_print
 % Callback routine to print selected figures
-[h,fig] = gcbo;
+[~,fig] = gcbo;
 k = findobj(fig,'style','checkbox');
 kv = get(k,'value');
 kv = [ kv{:} ]'; % convert to a double array
 v = find(kv > 0);
 k = k(v);
 kv = kv(v);
-[Y,I] = sort(kv);
+[~,I] = sort(kv);
 k = k(I)';
 for i = k
   kt = char(get(i,'tag'));
