@@ -1,35 +1,8 @@
 function f = ne_listdirs( f, pdir, max_rows )
 [~,rem] = strtok(pdir,'\/');
 if isempty(rem)
-  if exist(pdir,'file')
-    newpdir = eval(pdir);
-    if ~exist(newpdir,'dir')
-      warning('HUARP:GENUI', 'Function "%s" did not return a directory', pdir);
-      return;
-    end
-    pdir = newpdir;
-  else
-    set(f.fig, 'visible', 'off');
-    newpdir = uigetdir([], 'Where are run directories located?');
-    set(f.fig, 'visible', 'on');
-    if isnumeric(newpdir)
-      warning('HUARP:GENUI', 'No directory selected, no data will be viewable');
-      return;
-    end
-    if ~exist(newpdir,'dir')
-      warning('HUARP:GENUI', 'uigetdir did not return a directory: %s', newpdir);
-      return;
-    end
-    ST = dbstack(1,'-completenames');
-    exppath = fileparts(ST.file);
-    newfile = fullfile(exppath, [ pdir '.m']);
-    nfd = fopen(newfile,'w');
-    fprintf(nfd,'function path = %s\n', pdir);
-    fprintf(nfd,'%% path = %s;\n', pdir);
-    fprintf(nfd,'path = ''%s'';\n', newpdir);
-    fclose(nfd);
-    pdir = newpdir;
-  end
+  set(f.fig, 'visible', 'off');
+  pdir = ne_load_runsdir(pdir, 2);
 end
 files = dir( pdir );
 [ ~, ifiles ] = sort({files.name});

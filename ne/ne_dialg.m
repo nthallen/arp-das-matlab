@@ -243,6 +243,7 @@ elseif strcmp(func,'resize')
         end
       end
   end
+  set(f.fig,'Visible','On');
 else
   error('Invalid option to ne_dialg');
 end
