@@ -1,5 +1,6 @@
-function [b,a] = singlepole( Wn, ftype );
+function [b,a] = singlepole( Wn, ftype )
 % [b,a] = singlepole( Wn, ftype );
+% b and a are suitable input parameters to Matlab's filter()
 % Wn is the normalized cutoff frequency where Fnyquist = 1
 % ftype is either 'lowpass' or 'highpass'
 RC = 1/(2*pi*Wn);
