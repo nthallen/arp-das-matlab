@@ -11,4 +11,7 @@ kv = kv(v);
 [~,I] = sort(kv);
 k = k(I)';
 graphs = get(k,'tag');
+if ~iscell(graphs)
+    graphs = { graphs };
+end
 ne_group({},'Ad Hoc Graph Grouping',graphs{:});
