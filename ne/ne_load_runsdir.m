@@ -9,7 +9,10 @@ function runsdir = ne_load_runsdir(pdir, depth)
 % for future use. The function is stored in the directory
 % where the caller's function is stored.
 % depth, if present, indicates how far up the call
-% chain we should look.
+% chain we should look. The default is 1, which means
+% store the file not in the directory where ne_load_runsdir.m
+% is found but where the function calling ne_load_runsdir()
+% is found. Higher numbers are used for deeper nesting.
 if nargin < 2
     depth = 1;
 end
@@ -32,7 +35,11 @@ else
         return;
     end
     ST = dbstack(depth,'-completenames');
-    exppath = fileparts(ST(1).file);
+    if isempty(ST)
+        exppath = '.';
+    else
+        exppath = fileparts(ST(1).file);
+    end
     newfile = fullfile(exppath, [ pdir '.m']);
     nfd = fopen(newfile,'w');
     fprintf(nfd,'function path = %s\n', pdir);
