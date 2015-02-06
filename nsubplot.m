@@ -1,4 +1,4 @@
-function a = nsubplot( nYbins, nXbins, Ybin, Xbin, XSpace, YSpace );
+function a = nsubplot( nYbins, nXbins, Ybin, Xbin, XSpace, YSpace )
 % a = nsubplot( nYbins, nXbins, Ybin, Xbin [, XSpace[, YSpace]] );
 % Like subplot(), but doesn't leave any space between
 % the figures. It is left up to the user to shut off

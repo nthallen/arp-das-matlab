@@ -1,4 +1,4 @@
-function a = nsubpos( nYbins, nXbins, Ybin, Xbin );
+function a = nsubpos( nYbins, nXbins, Ybin, Xbin )
 % a = nsubpos( nYbins, nXbins, Ybin, Xbin );
 % Returns position for subplot axes.
 % Like subplot(), but doesn't leave any space between
