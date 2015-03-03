@@ -1,4 +1,4 @@
-function gencal2( T, Ct, Scale, typenm, Desc, FromTo, quiet, fid )
+function CVout = gencal2( T, Ct, Scale, typenm, Desc, FromTo, quiet, fid )
 % gencal2( T, Ct, Scale, typenm, Desc, FromTo, quiet [, fid] )
 % T Temperature Vector
 % Ct Counts Vector
@@ -37,25 +37,29 @@ dT = diff(Temperature); dC = diff(Counts);
 dTdC = dT./dC;
 Threshold = abs(dTdC/2);
 Threshold = [ Threshold(1); Threshold ];
-figure;
-set(gcf, 'Name', [ typename ' Summary' ] );
-set(gcf, 'NumberTitle', 'off' );
-subplot(2,1,2);
-%plot(T1,dTdC);
-semilogy(Temperature,Threshold);
-xlabel('Temperature');
-ylabel('Precision');
-grid;
-set(gca,'Ylim', [ min(Threshold) max(Threshold) ]);
-%set(gca, 'Xlim', [0 150]);
-subplot(2,1,1);
+if quiet < 3
+    figure;
+    set(gcf, 'Name', [ typename ' Summary' ] );
+    set(gcf, 'NumberTitle', 'off' );
+    subplot(2,1,2);
+    %plot(T1,dTdC);
+    semilogy(Temperature,Threshold);
+    xlabel('Temperature');
+    ylabel('Precision');
+    grid;
+    set(gca,'Ylim', [ min(Threshold) max(Threshold) ]);
+    %set(gca, 'Xlim', [0 150]);
+    subplot(2,1,1);
+end
 CV = allpts2(quiet);
 TV = interp1(Counts,Temperature,CV);
-if quiet
-  plot( Temperature, Counts, 'y', TV, CV, 'xb' );
-  grid;
+if quiet < 3
+    if quiet
+        plot( Temperature, Counts, 'y', TV, CV, 'xb' );
+        grid;
+    end
+    title(Desc);
 end
-title(Desc);
 if fid < 0
   fid=fopen(File, 'w');
 end
@@ -69,5 +73,8 @@ fprintf(fid, '\n}\n' );
 if nargin < 8
   fclose(fid);
   fprintf(1,'Wrote Calibratrion to %s\n', File );
+end
+if nargout > 0
+    CVout= CV;
 end
 
