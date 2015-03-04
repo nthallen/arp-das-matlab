@@ -1,4 +1,4 @@
-function CVout = gencal2( T, Ct, Scale, typenm, Desc, FromTo, quiet, fid )
+function CVout = gencal2( T, Ct, Scale, typenm, Desc, FromTo, quiet, fid, extrema )
 % gencal2( T, Ct, Scale, typenm, Desc, FromTo, quiet [, fid] )
 % T Temperature Vector
 % Ct Counts Vector
@@ -20,12 +20,17 @@ global Temperature Counts Threshold typename
 Temperature=T;
 Counts=Ct;
 typename=typenm;
+if nargin < 9
+  extrema = [];
+end
 if nargin < 8
   fid = -1;
   if nargin < 7
     quiet = 0;
   end
   File=[ typename '.tmc' ];
+elseif isempty(fid)
+  fid = -1;
 elseif fid <= 0
   error('Invalid fid');
 end
@@ -65,9 +70,19 @@ if fid < 0
 end
 fprintf(fid, [ '/* ' Desc ' */\n' ] );
 fprintf(fid, ['Calibration ( ' FromTo ' ) {'] );
+if ~isempty(extrema)
+  fprintf(fid, '\n  %4.0f, %6.5f,', CV(1)*Scale-2, extrema(1));
+  fprintf(fid, '\n  %4.0f, %6.5f,', CV(1)*Scale-1, extrema(1));
+end
 for i = [1:length(CV)]
   fprintf(fid, '\n  %4.0f, %6.5f', CV(i)*Scale, TV(i) );
-  if ( i < length(CV) ) fprintf(fid, ','); end
+  if i < length(CV) || isempty(extrema)
+    fprintf(fid, ',');
+  end
+end
+if ~isempty(extrema)
+  fprintf(fid, '\n  %4.0f, %6.5f,', CV(end)*Scale+1, extrema(2));
+  fprintf(fid, '\n  %4.0f, %6.5f', CV(end)*Scale+2, extrema(2));
 end
 fprintf(fid, '\n}\n' );
 if nargin < 8
