@@ -29,7 +29,7 @@ for i = 1:size(vars,1)
     hh = [ hh plot( DT([1; v(:); lDS]), DB([1; vv(:); lDS]), 'k' ) ];
     hold on;
   end
-  labels{offset} = vars{i,1};
+  labels{offset} = strrep(vars{i,1},'_','\_');
   offset = offset + 1;
 end
 hold off;
