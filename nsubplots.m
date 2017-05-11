@@ -1,6 +1,6 @@
 function a_out = nsubplots( X, Y )
 % a = nsubplots( X [, Y] )
-% Displays multiple axes automatically.
+% Displays data in multiple axes automatically.
 % Optionally returns the list of axes.
 if nargin < 2
   Y = X;
@@ -8,18 +8,19 @@ if nargin < 2
 end
 np = size(Y,2);
 figure;
-a = [];
+a = zeros(np,1);
 for i=1:np
-  a = [ a nsubplot(np,1,i)];
-  plot(X,Y(:,i));
+  a(i) = nsubplot(np,1,i);
+  plot(a(i),X,Y(:,i));
   if mod(i,2)
-    set(gca,'YAxisLocation', 'Right');
+    set(a(i),'YAxisLocation', 'Right');
   end
   if i < np
-    set(gca,'XTickLabel',[]);
+    set(a(i),'XTickLabel',[]);
   end
 end
 addzoom
+linkaxes(a,'x');
 if nargout > 0
   a_out = a;
 end

@@ -12,7 +12,11 @@
 %  was written by Steve Lloyd. No other references to sources is known.
 %  It has been tweaked minimally by Norton Allen to eliminate loops where
 %  Matlab syntax permits.
-function sza=szaclean(Lat,Long,time,am,ai,ak)
+function sza=sza_calc(Lat,Long,time,am,ai,ak)
+  if nargin < 6
+    dn = time(1)/(24*60*60) + datenum(1970,1,1);
+    [ak,am,ai] = datevec(dn);
+  end
 
 ut=time./3600;       % GMT in decimal hours
 phi=Lat;             % Latitude (North is positive, South is negative)

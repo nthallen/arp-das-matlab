@@ -1,6 +1,8 @@
-function [a0,a1,a2] = SteinHart_fit(R, K)
+function [a0,a1,a3] = SteinHart_fit(R, K)
 % a = SteinHart_fit(R, K);
-% [a0, a1, a2] = SteinHart_fit(R, K);
+% [a0, a1, a3] = SteinHart_fit(R, K);
+% A = SteinHart_fit(R, K);
+%   Returns a 3-element vector
 if isrow(R)
   R = R';
 end
