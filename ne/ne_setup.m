@@ -60,6 +60,9 @@ end
 
 if args.HoldFig == 0
   fg = figure;
+  hda = datacursormode(fg);
+  set(hda, 'UpdateFcn', @ne_data_cursor_text_func);
+  datacursormode(fg, 'off');
   orient tall;
   ax = axes('position',[0 0 1 1],'Visible','off');
   h1 = text( 1, .98, getrun );
@@ -81,6 +84,11 @@ if args.HoldFig == 0
   addzoom(0,1);
   h3 = uimenu('label','Edit');
   setappdata( fg, 'EditMenu', h3 );
+  pat = [ getrundir filesep '*.log' ];
+  D = dir(pat);
+  for i = 1:length(D)
+    uimenu(h3,'Label', D(i).name, 'Callback', [ 'edit ' D(i).folder filesep D(i).name ] );
+  end
   h4 = uimenu('label','Expand');
   setappdata( fg, 'ExpandMenu', h4 );
 end
