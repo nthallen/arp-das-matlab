@@ -12,7 +12,7 @@ f = {};
 for varstr = varargin
   var = strtok( char(varstr), '/*+-' );
   found = '';
-  for file = { D.name };
+  for file = { D.name }
     cfile = [ fdir filesep char(file) ];
     vars = who('-file', cfile );
     if any(strcmpi( var, vars ))
