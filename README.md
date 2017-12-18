@@ -1,5 +1,5 @@
 # arp-das-matlab
-##General Purpose Matlab libraries for use with the Anderson Group Data Acquisition Systems
+## General Purpose Matlab libraries for use with the Anderson Group Data Acquisition Systems
 
 This is a collection of Matlab utility scripts I have found useful over the years. Some of these were hacks to work around Matlab's limitations that have since been fixed.
 
