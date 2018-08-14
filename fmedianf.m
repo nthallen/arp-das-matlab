@@ -1,4 +1,4 @@
-function f = fmedianf( g, np );
+function f = fmedianf( g, np )
 % f = fmedianf( g, np );
 % g is a column vector or matrix.
 % np is the number of points on each side.
@@ -12,10 +12,10 @@ for j = 1:size(g,2)
     lg = length(g1);
     V = zeros(lg,2*np+1);
     V(:,1) = g1;
-    for i = [1:np]
+    for i = 1:np
       V(:,[2*i 2*i+1]) = ...
-        [ [ ones(i,1)*g1(1,1); g1([1:lg-i],1) ] ...
-          [ g1([i+1:lg],1); ones(i,1)*g1(lg,1) ] ];
+        [ [ ones(i,1)*g1(1,1); g1(1:lg-i,1) ] ...
+          [ g1(i+1:lg,1); ones(i,1)*g1(lg,1) ] ];
     end
     f(v(:,j),j) = median( V, 2 );
   else
