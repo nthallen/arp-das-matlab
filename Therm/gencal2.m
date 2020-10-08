@@ -23,16 +23,14 @@ typename=typenm;
 if nargin < 9
   extrema = [];
 end
-if nargin < 8
+if nargin < 8 || isempty(fid)
   fid = -1;
-  if nargin < 7
-    quiet = 0;
-  end
   File=[ typename '.tmc' ];
-elseif isempty(fid)
-  fid = -1;
 elseif fid <= 0
   error('Invalid fid');
+end
+if nargin < 7 || isempty(quiet)
+  quiet = 0;
 end
 
 % What I'm really interested in now is dT/dCt over the desired temperature
@@ -76,7 +74,7 @@ if ~isempty(extrema)
 end
 for i = [1:length(CV)]
   fprintf(fid, '\n  %4.0f, %6.5f', CV(i)*Scale, TV(i) );
-  if i < length(CV) || isempty(extrema)
+  if i < length(CV) || ~isempty(extrema)
     fprintf(fid, ',');
   end
 end
