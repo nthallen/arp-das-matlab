@@ -1,4 +1,7 @@
-function f = ne_listdirs( f, pdir, max_rows )
+function f = ne_listdirs( f, pdir, max_rows, max_dirs )
+if nargin < 4
+    max_dirs = 0;
+end
 [~,rem] = strtok(pdir,'\/');
 if isempty(rem)
   set(f.fig, 'visible', 'off');
@@ -9,6 +12,7 @@ files = dir( pdir );
 if size(ifiles,2) > 1
   ifiles = ifiles';
 end
+n_runs = 0;
 files = files(flipud(ifiles));
 row = max_rows;
 dflt_set = 0;
@@ -42,5 +46,9 @@ for file = files'
       dflt_set = 1;
     end
     row = row + 1;
+    n_runs = n_runs+1;
+    if max_dirs > 0 && n_runs >= max_dirs
+        break;
+    end
   end
 end
