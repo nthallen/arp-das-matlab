@@ -86,7 +86,18 @@ classdef data_fig < handle
                     n = axn{2};
                     D = dr.data_vector(var,V);
                     lns = findobj(ax.axis,'type','line','parent',ax.axis);
-                    set(lns(n),'XData',T-df.drs.max_time,'YData',D);
+                    w = size(D,2);
+                    if w == 1 || dr.datainfo.(var).interp == 0
+                      set(lns(n),'XData',T-df.drs.max_time,'YData',D);
+                    else % doing time interpolation
+                      h = size(D,1)-1;
+                      if h > 0
+                        I = ((1:h*w)-1)/w+1;
+                        TI = interp1(1:h*w,T,I);
+                        DI = reshape(D(2:end,:)',[],1);
+                        set(lns(n),'XData',TI-df.drs.max_time,'YData',DI);
+                      end
+                    end
                 end
             end
         end

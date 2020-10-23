@@ -3,6 +3,7 @@ classdef data_record < handle
         record_name
         time_name
         data
+        datainfo
         n_alloc
         n_recd
         min_alloc
@@ -28,7 +29,12 @@ classdef data_record < handle
                 dr.n_flds = length(flds);
                 dr.ix = (1:dr.n_alloc)';
                 for i = 1:dr.n_flds
-                    dr.data.(flds{i}) = zeros(dr.min_alloc,1) * NaN;
+                    w = length(str.(flds{i}));
+                    dr.datainfo.(flds{i}).w = w;
+                    if ~isfield(dr.datainfo.(flds{i}),'interp')
+                      dr.datainfo.(flds{i}).interp = 0;
+                    end
+                    dr.data.(flds{i}) = zeros(dr.min_alloc,w) * NaN;
                 end
                 if ~isfield(dr.data, dr.time_name)
                     error('Structure for record %s missing time var %s', ...
@@ -41,10 +47,11 @@ classdef data_record < handle
                     error('Change in size of record %s', dr.record_name);
                 end
                 cur_time = str.(dr.time_name);
-                if cur_time <= dr.max_time
+                % time should *really* be a scalar
+                if cur_time(1) <= dr.max_time
                     error('Time is non-monotonic for record %s', dr.record_name);
                 end
-                dr.max_time = cur_time;
+                dr.max_time = cur_time(end);
             end
             for i = 1:dr.n_flds
                 if ~isfield(dr.data, flds{i})
@@ -57,13 +64,13 @@ classdef data_record < handle
                 for i = 1:length(flds)
                     dr.data.(flds{i}) = [
                         dr.data.(flds{i});
-                        zeros(dr.min_alloc,1) * NaN ];
+                        zeros(dr.min_alloc,dr.datainfo.(flds{i}).w) * NaN ];
                 end
                 dr.n_alloc = dr.n_alloc + dr.min_alloc;
                 dr.ix = (1:dr.n_alloc)';
             end
             for i = 1:dr.n_flds
-                dr.data.(flds{i})(dr.n_recd) = str.(flds{i});
+                dr.data.(flds{i})(dr.n_recd,:) = str.(flds{i});
             end
         end
         
@@ -80,7 +87,7 @@ classdef data_record < handle
         
         function D = data_vector(dr, var_name, V)
             if isfield(dr.data, var_name)
-                D = dr.data.(var_name)(V);
+                D = dr.data.(var_name)(V,:);
             else
                 D = [];
             end

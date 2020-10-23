@@ -174,6 +174,7 @@ classdef data_fields < handle
       dfs.graph_figs{end+1} = dfig;
     end
     function new_graph(dfs, rec_name, var_name, mode, fignum, axisnum)
+      dfs.records.add_record(rec_name);
       if mode == "new_fig"
         dfig = dfs.new_graph_fig();
         axisnum = 0;
