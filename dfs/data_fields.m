@@ -7,6 +7,7 @@ classdef data_fields < handle
   % This class will keep track of the position of fields on the figure.
   properties
     fig
+    n_figs
     figbgcolor
     opts
     %       min_y
@@ -43,6 +44,7 @@ classdef data_fields < handle
   methods
     function dfs = data_fields(fig_in, varargin)
       dfs.fig = fig_in;
+      dfs.n_figs = 0;
       % verify that fig is an object
       % record dimensions
       set(dfs.fig,'units','pixels');
@@ -78,7 +80,8 @@ classdef data_fields < handle
       dfs.dfuicontextmenu = uicontextmenu(fig_in);
       dfs.gimenu = uimenu(dfs.dfuicontextmenu,'Label','Graph in:');
       uimenu(dfs.gimenu,'Label','New figure', ...
-        'Callback', { @data_fields.context_callback, "new_fig"});
+        'Callback', { @data_fields.context_callback, "new_fig"}, ...
+        'Interruptible', 'off');
     end
     
     function start_col(dfs)
@@ -170,8 +173,8 @@ classdef data_fields < handle
       end
     end
     function dfig = new_graph_fig(dfs)
-      dfig = data_fig(dfs, length(dfs.graph_figs)+1);
-      dfs.graph_figs{end+1} = dfig;
+      dfs.n_figs = dfs.n_figs+1;
+      dfig = data_fig(dfs, dfs.n_figs);
     end
     function new_graph(dfs, rec_name, var_name, mode, fignum, axisnum)
       dfs.records.add_record(rec_name);
@@ -185,6 +188,9 @@ classdef data_fields < handle
         end
       end
       dfig.new_graph(rec_name, var_name, mode, axisnum);
+      if mode == "new_fig"
+        dfs.graph_figs{dfig.fignum} = dfig;
+      end
     end
     function m = add_menu(dfs, title)
       m = uimenu(dfs.fig,'Text',title);
