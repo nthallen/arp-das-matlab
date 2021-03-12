@@ -32,7 +32,7 @@ classdef data_record < handle
                     w = length(str.(flds{i}));
                     dr.datainfo.(flds{i}).w = w;
                     if ~isfield(dr.datainfo.(flds{i}),'interp')
-                      dr.datainfo.(flds{i}).interp = 0;
+                      dr.datainfo.(flds{i}).interp = 1;
                     end
                     dr.data.(flds{i}) = zeros(dr.min_alloc,w) * NaN;
                 end

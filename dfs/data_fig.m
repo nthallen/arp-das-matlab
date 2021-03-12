@@ -93,7 +93,7 @@ classdef data_fig < handle
                       h = size(D,1)-1;
                       if h > 0
                         I = ((1:h*w)-1)/w+1;
-                        TI = interp1(1:h*w,T,I);
+                        TI = interp1(1:h+1,T,I);
                         DI = reshape(D(2:end,:)',[],1);
                         set(lns(n),'XData',TI-df.drs.max_time,'YData',DI);
                       end

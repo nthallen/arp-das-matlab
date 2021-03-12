@@ -196,11 +196,15 @@ classdef data_fields < handle
     function datum = get_userdata(dfs)
       datum = get(dfs.fig,'userdata');
     end
+    function set_interp(dfs, recname, datum, val)
+      dr = dfs.records.records.(recname);
+      dr.datainfo.(datum).interp = val;
+    end
     
     function connect(dfs, hostname, hostport)
       dfs.data_conn.n = 0;
       dfs.data_conn.t = tcpip(hostname, hostport, 'Terminator', '}', ...
-        'InputBufferSize', 4096);
+        'InputBufferSize', 65536);
       dfs.data_conn.t.BytesAvailableFcn = @dfs.BytesAvFcn;
       dfs.data_conn.t.BytesAvailableFcnMode = 'terminator';
       fopen(dfs.data_conn.t);
