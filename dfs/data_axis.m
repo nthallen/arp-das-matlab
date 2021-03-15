@@ -27,10 +27,14 @@ classdef data_axis < handle
                 dr = da.dfig.drs.records.(rec_name);
                 [T,V] = dr.time_vector(200);
                 D = dr.data_vector(var_name,V);
-                if isempty(T)
+                T0 = da.dfig.drs.max_time;
+                if isempty(T) | isempty(T0)
+                    if isempty(T0)
+                      warning('T0 is empty');
+                    end
                     plot(da.axis, nan, nan);
                 else
-                    plot(da.axis, T-da.dfig.drs.max_time, D);
+                    plot(da.axis, T-T0, D);
                 end
                 hold(da.axis,'on');
             end

@@ -21,12 +21,17 @@ classdef data_fig < handle
             uimenu(df.mymenu,'Text','New axes', ...
               'Callback', { @data_fields.context_callback, ...
               "new_axes", fignum });
+            set(df.fig,'CloseRequestFcn', @df.closereq);
         end
 
         function new_graph(df, rec_name, var_name, mode, axisnum)
             % use the figure's mode to decide where to put it
             % for starters, always create a new axis
             % @param mode: "new_fig", "new_axes", "cur_axes"
+            if isempty(df.fig)
+              warning('Attempt to add graph to closed data_fig');
+              return;
+            end
             if ~isfield(df.recs,rec_name)
                 df.recs.(rec_name).vars = [];
             end
@@ -74,6 +79,9 @@ classdef data_fig < handle
         end
         
         function update(df, rec_name)
+            if isempty(df.fig)
+              return;
+            end
             % update data for each line of each graph
             if isfield(df.recs,rec_name) % if we are plotting any data
                 dr = df.drs.records.(rec_name);
@@ -102,10 +110,24 @@ classdef data_fig < handle
                     ax = axn{axi,1};
                     n = axn{axi,2};
                     lns = findobj(ax.axis,'type','line','parent',ax.axis);
-                    set(lns(n),'XData',TI,'YData',DI);
+                    if n > 0 & n <= length(lns)
+                      set(lns(n),'XData',TI,'YData',DI);
+                    else
+                      warning('Line %d not in axis', n);
+                    end
                   end
                 end
             end
+        end
+        
+        function closereq(df, ~, ~)
+          f = df.fig;
+          df.fig = [];
+          df.axis_vec = [];
+          df.axes = {};
+          df.recs = [];
+          set(df.mymenu,'enable','off','visible','off');
+          delete(f);
         end
     end
 end

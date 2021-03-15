@@ -38,6 +38,7 @@ classdef data_fields < handle
     % cur_col.max_txt_width will be the current maximum text width
     graph_figs % cell array of data_fig objects
     dfuicontextmenu % uicontextmenu for data_field lables
+    connectmenu % connect menu
     gimenu % The 'Graph in:' submenu
     data_conn % The tcpip connection
   end
@@ -82,6 +83,7 @@ classdef data_fields < handle
       uimenu(dfs.gimenu,'Label','New figure', ...
         'Callback', { @data_fields.context_callback, "new_fig"}, ...
         'Interruptible', 'off');
+      dfs.connectmenu = [];
     end
     
     function start_col(dfs)
@@ -147,6 +149,15 @@ classdef data_fields < handle
       dfs.cur_y = dfs.cur_y - dfs.opts.v_leading;
       if nargout > 0; df = df_int; end
     end
+    
+    function set_connection(dfs, hostname, port)
+      if isempty(dfs.connectmenu)
+        dfs.connectmenu = uimenu(dfs.fig, 'Text', 'Connect', ...
+          'Callback', @(s,e)do_connect(dfs,s,e,hostname,port), ...
+          'Interruptible', 'off');
+      end
+    end
+    
     function process_record(dfs,rec_name,str)
       if nargin >= 3
         dfs.records.process_record(rec_name,str);
@@ -208,6 +219,9 @@ classdef data_fields < handle
     end
     
     function connect(dfs, hostname, hostport)
+      if dfs.data_conn.connected == 1
+        return;
+      end
       dfs.data_conn.n = 0;
       dfs.data_conn.t = tcpip(hostname, hostport, 'Terminator', '}', ...
         'InputBufferSize', 65536);
@@ -245,6 +259,15 @@ classdef data_fields < handle
       delete(dfs.data_conn.t);
       dfs.data_conn.t = [];
     end
+    
+    function do_connect(dfs, ~, ~, hostname, port)
+      if dfs.data_conn.connected
+        dfs.disconnect();
+      else
+        dfs.connect(hostname, port);
+      end
+    end
+    
   end
   methods(Static)
     function context_callback(~,~, mode, fignum, axisnum)
