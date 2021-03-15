@@ -49,7 +49,8 @@ classdef data_record < handle
                 cur_time = str.(dr.time_name);
                 % time should *really* be a scalar
                 if cur_time(1) <= dr.max_time
-                    error('Time is non-monotonic for record %s', dr.record_name);
+                    warning('Time is non-monotonic for record %s', dr.record_name);
+                    dr.n_recd = 0;
                 end
                 dr.max_time = cur_time(end);
             end

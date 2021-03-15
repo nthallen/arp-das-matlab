@@ -30,9 +30,6 @@ classdef data_fig < handle
             if ~isfield(df.recs,rec_name)
                 df.recs.(rec_name).vars = [];
             end
-            if ~isfield(df.recs.(rec_name).vars, var_name)
-                df.recs.(rec_name).vars.(var_name) = {};
-            end
             if mode == "new_fig" || mode == "new_axes"
                 the_axis = data_axis(df, var_name);
                 df.axes{end+1} = the_axis;
@@ -45,9 +42,14 @@ classdef data_fig < handle
                 the_axis = df.axes{axisnum};
             end
             n = the_axis.add_line(rec_name, var_name);
-            df.recs.(rec_name).vars.(var_name) = [
-                df.recs.(rec_name).vars.(var_name)
-                {the_axis n} ];
+            if isfield(df.recs.(rec_name).vars, var_name)
+              df.recs.(rec_name).vars.(var_name) = [
+                  df.recs.(rec_name).vars.(var_name)
+                  {the_axis n} ];
+            else
+              df.recs.(rec_name).vars.(var_name) = ...
+                { the_axis n};
+            end
             df.redraw();
         end
 
@@ -80,24 +82,28 @@ classdef data_fig < handle
                 vars = df.recs.(rec_name).vars;
                 var_names = fieldnames(vars);
                 for i=1:length(var_names)
-                    var = var_names{i};
-                    axn = vars.(var);
-                    ax = axn{1};
-                    n = axn{2};
-                    D = dr.data_vector(var,V);
-                    lns = findobj(ax.axis,'type','line','parent',ax.axis);
-                    w = size(D,2);
-                    if w == 1 || dr.datainfo.(var).interp == 0
-                      set(lns(n),'XData',T-df.drs.max_time,'YData',D);
-                    else % doing time interpolation
-                      h = size(D,1)-1;
-                      if h > 0
-                        I = ((1:h*w)-1)/w+1;
-                        TI = interp1(1:h+1,T,I);
-                        DI = reshape(D(2:end,:)',[],1);
-                        set(lns(n),'XData',TI-df.drs.max_time,'YData',DI);
-                      end
+                  var = var_names{i};
+                  axn = vars.(var);
+                  
+                  D = dr.data_vector(var,V);
+                  w = size(D,2);
+                  if w == 1 || dr.datainfo.(var).interp == 0
+                    TI = T - df.drs.max_time;
+                    DI = D;
+                  else % doing time interpolation
+                    h = size(D,1)-1;
+                    if h > 0
+                      I = ((1:h*w)-1)/w+1;
+                      TI = interp1(1:h+1,T,I)-df.drs.max_time;
+                      DI = reshape(D(2:end,:)',[],1);
                     end
+                  end
+                  for axi=1:size(axn,1)
+                    ax = axn{axi,1};
+                    n = axn{axi,2};
+                    lns = findobj(ax.axis,'type','line','parent',ax.axis);
+                    set(lns(n),'XData',TI,'YData',DI);
+                  end
                 end
             end
         end
