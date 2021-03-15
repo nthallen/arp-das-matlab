@@ -84,6 +84,7 @@ classdef data_fields < handle
         'Callback', { @data_fields.context_callback, "new_fig"}, ...
         'Interruptible', 'off');
       dfs.connectmenu = [];
+      set(dfs.fig,'CloseRequestFcn', @dfs.closereq);
     end
     
     function start_col(dfs)
@@ -152,7 +153,8 @@ classdef data_fields < handle
     
     function set_connection(dfs, hostname, port)
       if isempty(dfs.connectmenu)
-        dfs.connectmenu = uimenu(dfs.fig, 'Text', 'Connect', ...
+        m = uimenu(dfs.fig,'Text','DFS');
+        dfs.connectmenu = uimenu(m, 'Text', 'Connect', ...
           'Callback', @(s,e)do_connect(dfs,s,e,hostname,port), ...
           'Interruptible', 'off');
       end
@@ -266,8 +268,27 @@ classdef data_fields < handle
       else
         dfs.connect(hostname, port);
       end
+      if dfs.data_conn.connected
+        dfs.connectmenu.Checked = 'On';
+      else
+        dfs.connectmenu.Checked = 'Off';
+      end
     end
     
+    function closereq(dfs,~,~)
+      % close each of the graph_figs
+      if dfs.data_conn.connected
+        dfs.disconnect();
+      end
+      for i = 1:length(dfs.graph_figs)
+        df = dfs.graph_figs{i};
+        if ~isempty(df.fig)
+          close(df.fig);
+        end
+      end
+      delete(dfs.fig);
+      dfs.fig = [];
+    end
   end
   methods(Static)
     function context_callback(~,~, mode, fignum, axisnum)
