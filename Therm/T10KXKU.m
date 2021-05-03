@@ -1,4 +1,4 @@
-function T10KXU( Rpullup, scale );
+function T10KXKU( Rpullup, scale )
 % T10KXU( Rpullup[, scale] );
 % Generates Calibration for
 %   10K Thermistor

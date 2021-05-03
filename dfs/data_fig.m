@@ -79,45 +79,48 @@ classdef data_fig < handle
         end
         
         function update(df, rec_name)
-            if isempty(df.fig)
-              return;
-            end
-            % update data for each line of each graph
-            if isfield(df.recs,rec_name) % if we are plotting any data
-                dr = df.drs.records.(rec_name);
-                [T,V] = dr.time_vector(200);
-                % go through df.recs.(rec_name).vars
-                vars = df.recs.(rec_name).vars;
-                var_names = fieldnames(vars);
-                for i=1:length(var_names)
-                  var = var_names{i};
-                  axn = vars.(var);
-                  
-                  D = dr.data_vector(var,V);
-                  w = size(D,2);
-                  if w == 1 || dr.datainfo.(var).interp == 0
-                    TI = T - df.drs.max_time;
-                    DI = D;
-                  else % doing time interpolation
-                    h = size(D,1)-1;
-                    if h > 0
-                      I = ((1:h*w)-1)/w+1;
-                      TI = interp1(1:h+1,T,I)-df.drs.max_time;
-                      DI = reshape(D(2:end,:)',[],1);
-                    end
-                  end
-                  for axi=1:size(axn,1)
-                    ax = axn{axi,1};
-                    n = axn{axi,2};
-                    lns = findobj(ax.axis,'type','line','parent',ax.axis);
-                    if n > 0 & n <= length(lns)
-                      set(lns(n),'XData',TI,'YData',DI);
-                    else
-                      warning('Line %d not in axis', n);
-                    end
+          if isempty(df.fig)
+            return;
+          end
+          % update data for each line of each graph
+          if isfield(df.recs,rec_name) % if we are plotting any data
+            dr = df.drs.records.(rec_name);
+            [T,V] = dr.time_vector(200);
+            % go through df.recs.(rec_name).vars
+            if isfield(df.recs.(rec_name), 'vars') && ...
+                isstruct(df.recs.(rec_name).vars)
+              vars = df.recs.(rec_name).vars;
+              var_names = fieldnames(vars);
+              for i=1:length(var_names)
+                var = var_names{i};
+                axn = vars.(var);
+                
+                D = dr.data_vector(var,V);
+                w = size(D,2);
+                if w == 1 || dr.datainfo.(var).interp == 0
+                  TI = T - df.drs.max_time;
+                  DI = D;
+                else % doing time interpolation
+                  h = size(D,1)-1;
+                  if h > 0
+                    I = ((1:h*w)-1)/w+1;
+                    TI = interp1(1:h+1,T,I)-df.drs.max_time;
+                    DI = reshape(D(2:end,:)',[],1);
                   end
                 end
+                for axi=1:size(axn,1)
+                  ax = axn{axi,1};
+                  n = axn{axi,2};
+                  lns = findobj(ax.axis,'type','line','parent',ax.axis);
+                  if n > 0 && n <= length(lns)
+                    set(lns(n),'XData',TI,'YData',DI);
+                  else
+                    warning('Line %d not in axis', n);
+                  end
+                end
+              end
             end
+          end
         end
         
         function closereq(df, ~, ~)
