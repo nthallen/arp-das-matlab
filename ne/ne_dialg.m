@@ -6,13 +6,13 @@ function f = ne_dialg( ttl, func, lvl, prt, callback, title, varargin )
 % f = ne_dialg( f, 'newtab', title );
 xpad = 10;
 ypad = 2;
-ytop = 20;
+% ytop = 20;
 xindent = 20;
 boxdim = 14; % size of a checkbox
 boxwid = 20; % width required for checkbox (add to extent)
 if nargin == 0
   error('Arguments required for ne_dialg()');
-elseif isstr(ttl)
+elseif ischar(ttl)
   f.fig = figure;
   if nargin < 2
       func = 0;
@@ -48,7 +48,7 @@ elseif ~isfield(ttl,'fig')
 else
   f = ttl;
 end
-if strcmp(func,'add');
+if strcmp(func,'add')
   % lvl determines indentation
   % prt < 0 creates a radiobutton for run selection
   % prt >= 0 creates a pushbutton for graph selection
@@ -125,7 +125,7 @@ elseif strcmp(func,'newtab')
   h = uicontrol(panel,'Style','text','String',ttl,'units','pixels', ...
       'BackgroundColor', f.panelbg, 'FontSize', 10, 'FontWeight','bold');
   ttlp = get(h,'Extent');
-  ttlwid = ttlp(3);
+  % ttlwid = ttlp(3);
   ttlp(1) = (f.panelpos(3)+ttlp(3))/2;
   ttlp(2) = (f.panelpos(4)-ttlp(4)-2*ypad);
   set(h,'Position',ttlp);
@@ -146,7 +146,7 @@ elseif strcmp(func,'newcol')
       parent = f.panel(end);
   end
   k = findobj(parent,'style','pushbutton');
-  for i = k';
+  for i = k'
     p = get(i,'Position');
     if p(1) >= f.x && p(1) < f.xmax
       p(3) = f.xmax - xpad - p(1);

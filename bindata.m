@@ -1,8 +1,8 @@
-function [xbins,ybins] = bindata( x, y, xbin, method );
+function [xbins,ybins] = bindata( x, y, xbin, method )
 if nargin < 4
   method = 'range';
 end
-if size(x,2) ~= 1 & size(x,2) ~= size(y,2)
+if size(x,2) ~= 1 && size(x,2) ~= size(y,2)
   error('x must be a column vector or the same size as y');
 end
 if size(x,1) ~= size(y,1)
