@@ -152,6 +152,8 @@ classdef data_fields < handle
     end
     
     function set_connection(dfs, hostname, port)
+      % dfs.set_connection(hostname, port)
+      % Establishes the 'Connect' menu.
       if isempty(dfs.connectmenu)
         m = uimenu(dfs.fig,'Text','DFS');
         dfs.connectmenu = uimenu(m, 'Text', 'Connect', ...
@@ -185,10 +187,12 @@ classdef data_fields < handle
         end
       end
     end
+    
     function dfig = new_graph_fig(dfs)
       dfs.n_figs = dfs.n_figs+1;
       dfig = data_fig(dfs, dfs.n_figs);
     end
+    
     function new_graph(dfs, rec_name, var_name, mode, fignum, axisnum)
       dfs.records.add_record(rec_name);
       if mode == "new_fig"
@@ -205,22 +209,30 @@ classdef data_fields < handle
         dfs.graph_figs{dfig.fignum} = dfig;
       end
     end
+    
     function m = add_menu(dfs, title)
       m = uimenu(dfs.fig,'Text',title);
       set(dfs.fig,'Interruptible','on');
     end
+    
     function add_userdata(dfs, datum)
       set(dfs.fig,'userdata',datum);
     end
+    
     function datum = get_userdata(dfs)
       datum = get(dfs.fig,'userdata');
     end
+    
     function set_interp(dfs, recname, datum, val)
       dr = dfs.records.records.(recname);
       dr.datainfo.(datum).interp = val;
     end
     
     function connect(dfs, hostname, hostport)
+      % dfs.connect(hostname, hostport)
+      % Internal function. Connection details should be
+      % established with dfs.set_connection() with the
+      % connect/disconnect logic handled by dfs.do_connect()
       if dfs.data_conn.connected == 1
         return;
       end
@@ -263,15 +275,25 @@ classdef data_fields < handle
     end
     
     function do_connect(dfs, ~, ~, hostname, port)
-      if dfs.data_conn.connected
-        dfs.disconnect();
+      % dfs.do_connect(~,~,hostname,port)
+      % Handles connect/disconnect logic for Connect
+      % menu.
+      if nargin < 5
+        if isempty(dfs.connectmenu)
+          error('do_connect() before set_connection()');
+        end
+        feval(get(dfs.connectmenu,'Callback'),[],[]);
       else
-        dfs.connect(hostname, port);
-      end
-      if dfs.data_conn.connected
-        dfs.connectmenu.Checked = 'On';
-      else
-        dfs.connectmenu.Checked = 'Off';
+        if dfs.data_conn.connected
+          dfs.disconnect();
+        else
+          dfs.connect(hostname, port);
+        end
+        if dfs.data_conn.connected
+          dfs.connectmenu.Checked = 'On';
+        else
+          dfs.connectmenu.Checked = 'Off';
+        end
       end
     end
     
