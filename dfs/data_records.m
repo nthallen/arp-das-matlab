@@ -15,6 +15,7 @@ classdef data_records < handle
         drs.records.(rec_name) = data_record(rec_name);
       end
     end
+    
     function process_record(drs,rec_name, str)
       if ~isfield(drs.records, rec_name)
         drs.add_record(rec_name);
@@ -28,7 +29,7 @@ classdef data_records < handle
         newmax = [];
         for i=1:length(recs)
           rmax = drs.records.(recs{i}).max_time;
-          if isempty(newmax) || rmax > newmax
+          if ~isempty(rmax) && (isempty(newmax) || rmax > newmax)
             newmax = rmax;
           end
         end
