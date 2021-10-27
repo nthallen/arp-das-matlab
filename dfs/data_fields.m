@@ -7,6 +7,7 @@ classdef data_fields < handle
   % This class will keep track of the position of fields on the figure.
   properties
     fig
+    figpos
     n_figs
     figbgcolor
     opts
@@ -43,16 +44,16 @@ classdef data_fields < handle
     data_conn % The tcpip connection
   end
   methods
-    function dfs = data_fields(fig_in, varargin)
-      dfs.fig = fig_in;
+    function dfs = data_fields(varargin)
+      dfs.fig = figure;
+      set(dfs.fig,'color',[.8 .8 1]);
       dfs.n_figs = 0;
-      % verify that fig is an object
-      % record dimensions
       set(dfs.fig,'units','pixels');
       d = get(dfs.fig,'Position');
+      dfs.figpos = d;
       dfs.opts.min_x = 0;
       dfs.opts.max_x = d(3);
-      dfs.opts.min_y = 0;
+      dfs.opts.min_y = d(4);
       dfs.opts.max_y = d(4);
       dfs.opts.v_padding = 10;
       dfs.opts.v_leading = 3;
@@ -78,7 +79,7 @@ classdef data_fields < handle
       dfs.records = data_records();
       dfs.figbgcolor = get(dfs.fig,'Color');
       dfs.graph_figs = {};
-      dfs.dfuicontextmenu = uicontextmenu(fig_in);
+      dfs.dfuicontextmenu = uicontextmenu(dfs.fig);
       dfs.gimenu = uimenu(dfs.dfuicontextmenu,'Label','Graph in:');
       uimenu(dfs.gimenu,'Label','New figure', ...
         'Callback', { @data_fields.context_callback, "new_fig"}, ...
@@ -89,9 +90,13 @@ classdef data_fields < handle
     
     function start_col(dfs)
       dfs.cur_col.fields = {};
+      dfs.cur_col.groups = {};
+      dfs.cur_col.plots = {};
       dfs.cur_col.n_rows = 0;
       dfs.cur_col.max_lbl_width = 0;
       dfs.cur_col.max_txt_width = 0;
+      dfs.cur_col.max_grp_width = 0;
+      dfs.cur_col.max_plt_width = 0;
       dfs.cur_y = dfs.opts.max_y - dfs.opts.v_padding;
       % dfs.cur_x = dfs.cur_x + dfs.opts.col_leading;
     end
@@ -113,6 +118,9 @@ classdef data_fields < handle
       % update cur_x to the right edge of righthand fields
       % plus col_leading, so left of new column
       dfs.cur_x = r_edge + dfs.opts.col_leading;
+      dfs.cur_col.fields = {};
+      dfs.cur_col.groups = {};
+      dfs.cur_col.plots = {};
     end
     
     function df = field(dfs, rec_name, var_name, fmt, signed)
@@ -126,11 +134,11 @@ classdef data_fields < handle
       end
       df_int = data_field(dfs, rec_name, var_name, fmt, signed);
       dfs.fields.(rec_name).vars.(var_name){end+1} = df_int;
-      if dfs.cur_y - df_int.fld_height < dfs.opts.min_y + dfs.opts.v_padding
-        dfs.end_col();
-        dfs.start_col();
-        % we assume one row will always fit
-      end
+%       if dfs.cur_y - df_int.fld_height < dfs.opts.min_y + dfs.opts.v_padding
+%         dfs.end_col();
+%         dfs.start_col();
+%         % we assume one row will always fit
+%       end
       dfs.cur_col.fields{end+1} = df_int;
       dfs.cur_col.n_rows = dfs.cur_col.n_rows+1;
       if df_int.lbl_width > dfs.cur_col.max_lbl_width
@@ -148,18 +156,26 @@ classdef data_fields < handle
         df_int.txt_width, ...
         df_int.fld_height];
       dfs.cur_y = dfs.cur_y - dfs.opts.v_leading;
+      if dfs.cur_y < dfs.opts.min_y
+        dfs.opts.min_y = dfs.cur_y;
+      end
       if nargout > 0; df = df_int; end
     end
     
-    function set_connection(dfs, hostname, port)
-      % dfs.set_connection(hostname, port)
-      % Establishes the 'Connect' menu.
-      if isempty(dfs.connectmenu)
-        m = uimenu(dfs.fig,'Text','DFS');
-        dfs.connectmenu = uimenu(m, 'Text', 'Connect', ...
-          'Callback', @(s,e)do_connect(dfs,s,e,hostname,port), ...
-          'Interruptible', 'off');
+    function resize(dfs)
+      pos = dfs.fig.Position;
+      pos(3) = dfs.cur_x;
+      pos(4) = dfs.opts.max_y - dfs.opts.min_y;
+      dfs.fig.Position = pos;
+      dfs.fig.Resize = 'Off';
+      % set(dfs.fig,'Resize','Off');
+      c = findobj(dfs.fig,'type','uicontrol')';
+      dy = dfs.opts.min_y-dfs.opts.v_padding;
+      for ctrl = c
+        ctrl.Position(2) = ctrl.Position(2)-dy;
       end
+      dfs.opts.max_y = dfs.opts.max_y - dy;
+      dfs.opts.min_y = dfs.opts.min_y - dy;
     end
     
     function process_record(dfs,rec_name,str)
@@ -193,7 +209,7 @@ classdef data_fields < handle
       dfig = data_fig(dfs, dfs.n_figs);
     end
     
-    function new_graph(dfs, rec_name, var_name, mode, fignum, axisnum)
+    function fignum = new_graph(dfs, rec_name, var_name, mode, fignum, axisnum)
       dfs.records.add_record(rec_name);
       if mode == "new_fig"
         dfig = dfs.new_graph_fig();
@@ -205,6 +221,7 @@ classdef data_fields < handle
         end
       end
       dfig.new_graph(rec_name, var_name, mode, axisnum);
+      fignum = dfig.fignum;
       if mode == "new_fig"
         dfs.graph_figs{dfig.fignum} = dfig;
       end
@@ -228,6 +245,17 @@ classdef data_fields < handle
       dr.datainfo.(datum).interp = val;
     end
     
+    function set_connection(dfs, hostname, port)
+      % dfs.set_connection(hostname, port)
+      % Establishes the 'Connect' menu.
+      if isempty(dfs.connectmenu)
+        m = uimenu(dfs.fig,'Text','DFS');
+        dfs.connectmenu = uimenu(m, 'Text', 'Connect', ...
+          'Callback', @(s,e)do_connect(dfs,s,e,hostname,port), ...
+          'Interruptible', 'off');
+      end
+    end
+    
     function connect(dfs, hostname, hostport)
       % dfs.connect(hostname, hostport)
       % Internal function. Connection details should be
@@ -243,6 +271,29 @@ classdef data_fields < handle
       dfs.data_conn.t.BytesAvailableFcnMode = 'terminator';
       fopen(dfs.data_conn.t);
       dfs.data_conn.connected = 1;
+    end
+    
+    function do_connect(dfs, ~, ~, hostname, port)
+      % dfs.do_connect(~,~,hostname,port)
+      % Handles connect/disconnect logic for Connect
+      % menu.
+      if nargin < 5
+        if isempty(dfs.connectmenu)
+          error('do_connect() before set_connection()');
+        end
+        feval(get(dfs.connectmenu,'Callback'),[],[]);
+      else
+        if dfs.data_conn.connected
+          dfs.disconnect();
+        else
+          dfs.connect(hostname, port);
+        end
+        if dfs.data_conn.connected
+          dfs.connectmenu.Checked = 'On';
+        else
+          dfs.connectmenu.Checked = 'Off';
+        end
+      end
     end
     
     % BytesAvFcn(dfs, src, eventdata)
@@ -272,29 +323,6 @@ classdef data_fields < handle
       fclose(dfs.data_conn.t);
       delete(dfs.data_conn.t);
       dfs.data_conn.t = [];
-    end
-    
-    function do_connect(dfs, ~, ~, hostname, port)
-      % dfs.do_connect(~,~,hostname,port)
-      % Handles connect/disconnect logic for Connect
-      % menu.
-      if nargin < 5
-        if isempty(dfs.connectmenu)
-          error('do_connect() before set_connection()');
-        end
-        feval(get(dfs.connectmenu,'Callback'),[],[]);
-      else
-        if dfs.data_conn.connected
-          dfs.disconnect();
-        else
-          dfs.connect(hostname, port);
-        end
-        if dfs.data_conn.connected
-          dfs.connectmenu.Checked = 'On';
-        else
-          dfs.connectmenu.Checked = 'Off';
-        end
-      end
     end
     
     function closereq(dfs,~,~)
