@@ -6,11 +6,12 @@ classdef data_fields < handle
   %
   % This class will keep track of the position of fields on the figure.
   properties
-    fig
-    figpos
+    fig % The graphics handle of the main figure
     n_figs
     figbgcolor
-    opts
+
+    % struct containing various options. These can be modified by passing
+    % option, value pairs in to the data_fields constructor:
     %       min_y
     %       max_y
     %       min_x
@@ -21,15 +22,20 @@ classdef data_fields < handle
     %       h_leading % space between label and text and unit
     %       col_leading % horizontal space between columns
     %       txt_padding
+    opts
     cur_x
     cur_y
     records % data_records object
-    fields
-    % fields will be indexed like records, i.e.
-    % obj.fields.(rec).vars.(var) will be an array of data_field
+
+    % fields are indexed like records, i.e.
+    % dfs.fields.(rec).vars.(var) will be an array of data_field
     % objects, allowing a variable to appear in more than one
-    % location
-    cur_col
+    % location. If a field is created before the variable's record has been
+    % identified, it will be placed under
+    % dfs.fields.unassociated.vars.(var)
+    fields
+    recbyvar % struct mapping var_name to rec_name
+
     % cur_col will record fields in the current column
     % We need to keep this until the column is closed, so we can
     % adjust the column widths.
@@ -37,6 +43,7 @@ classdef data_fields < handle
     % cur_col.n_rows will be a scalar count of elements in fields
     % cur_col.max_lbl_width will be the current maximum label width
     % cur_col.max_txt_width will be the current maximum text width
+    cur_col
     graph_figs % cell array of data_fig objects
     dfuicontextmenu % uicontextmenu for data_field lables
     connectmenu % connect menu
@@ -50,7 +57,6 @@ classdef data_fields < handle
       dfs.n_figs = 0;
       set(dfs.fig,'units','pixels');
       d = get(dfs.fig,'Position');
-      dfs.figpos = d;
       dfs.opts.min_x = 0;
       dfs.opts.max_x = d(3);
       dfs.opts.min_y = d(4);
@@ -124,21 +130,30 @@ classdef data_fields < handle
     end
     
     function df = field(dfs, rec_name, var_name, fmt, signed)
+      % df = dfs.field(rec_name, var_name, fmt, signed)
+      % rec_name is a sanity check for the moment, then will be eliminated
+      % var_name is the variable name
+      % fmt is printf format string for the display
+      % signed is a boolean, defaults to false
       if nargin < 5
         signed = false;
       end
-      dfs.records.add_record(rec_name);
+      % dfs.records.add_record(rec_name);
+      if isfield(dfs.recbyvar, var_name)
+        if ~isempty(rec_name) && ~strcmp(rec_name, dfs.recbyvar.(var_name))
+          warning('Var %s found in rec %s, but field def said %s', ...
+            var_name, dfs.recbyvar.(var_name), rec_name);
+        end
+        rec_name = dfs.recbyvar.(var_name);
+      else
+        rec_name = 'unassociated';
+      end
       if ~isfield(dfs.fields, rec_name) || ...
           ~isfield(dfs.fields.(rec_name).vars,var_name)
         dfs.fields.(rec_name).vars.(var_name) = {};
       end
       df_int = data_field(dfs, rec_name, var_name, fmt, signed);
       dfs.fields.(rec_name).vars.(var_name){end+1} = df_int;
-%       if dfs.cur_y - df_int.fld_height < dfs.opts.min_y + dfs.opts.v_padding
-%         dfs.end_col();
-%         dfs.start_col();
-%         % we assume one row will always fit
-%       end
       dfs.cur_col.fields{end+1} = df_int;
       dfs.cur_col.n_rows = dfs.cur_col.n_rows+1;
       if df_int.lbl_width > dfs.cur_col.max_lbl_width
@@ -179,8 +194,31 @@ classdef data_fields < handle
     end
     
     function process_record(dfs,rec_name,str)
+      % dfs.process_record(rec_name, str)
+      % rec_name is the record name
+      % str is the json-encoded data
+      % str is currently optional, in which case
+      % data_records.process_record is not called, but it is not entirely
+      % clear when this would be called. I guess it could be called when
+      % a graph is created.
       if nargin >= 3
-        dfs.records.process_record(rec_name,str);
+        was_new = dfs.records.process_record(rec_name,str);
+        if was_new && isfield(dfs.fields,'unassociated')
+          % Go through our unassociated vars in fields and figures and
+          % reclassify them if they are now defined
+          dr = dfs.records.records.(rec_name);
+          vars = fieldnames(dr.data);
+          for i=1:length(vars)
+            if isfield(dfs.fields.unassociated.vars,vars{i})
+              dfs.fields.(rec_name).vars.(vars{i}) = ...
+                dfs.fields.unassociated.vars.(vars{i});
+              dfs.fields.unassociated.vars = ...
+                rmfield(dfs.fields.unassociated.vars, vars{i});
+              fprintf(1,'Field Var %s associated with rec %s\n', ...
+                vars{i}, rec_name);
+            end
+          end
+        end
       end
       % Now go through fields and update text
       if isfield(dfs.fields,rec_name)

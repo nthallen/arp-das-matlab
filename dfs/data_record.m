@@ -22,9 +22,13 @@ classdef data_record < handle
       dr.max_time = [];
     end
     
-    function process_record(dr, str)
+    function was_new = process_record(dr, str)
+      % was_new = dr.process_record(str);
+      % str is a json-encoded string of data
+      % was_new will be non-zero the first time this record is processed
       flds = fieldnames(str);
       if dr.n_flds == 0
+        was_new = 1;
         dr.n_alloc = dr.min_alloc;
         dr.n_flds = length(flds);
         dr.ix = (1:dr.n_alloc)';
@@ -43,6 +47,7 @@ classdef data_record < handle
           dr.max_time = str.(dr.time_name);
         end
       else
+        was_new = 0;
         if dr.n_flds ~= length(flds)
           error('Change in size of record %s', dr.record_name);
         end

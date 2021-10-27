@@ -1,6 +1,6 @@
 classdef data_records < handle
   properties
-    records
+    records % struct mapping rec_name to data_record
     max_time
   end
   methods
@@ -16,12 +16,17 @@ classdef data_records < handle
       end
     end
     
-    function process_record(drs,rec_name, str)
+    function was_new = process_record(drs,rec_name, str)
+      % was_new = drs.process_record(rec_name, str);
+      % rec_name is a string specifying the record name
+      % str is a json-encoded string of data
+      % was_new will be non-zero if this is the first instance of this
+      % rec_name
       if ~isfield(drs.records, rec_name)
         drs.add_record(rec_name);
       end
       dr = drs.records.(rec_name);
-      dr.process_record(str);
+      was_new = dr.process_record(str);
       if isempty(drs.max_time) || dr.max_time > drs.max_time
         drs.max_time = dr.max_time;
       else
