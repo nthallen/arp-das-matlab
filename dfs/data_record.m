@@ -3,16 +3,16 @@ classdef data_record < handle
     record_name
     time_name
     data
-    datainfo
     n_alloc
     n_recd
     min_alloc
     n_flds
     ix
     max_time
+    dfs
   end
   methods
-    function dr = data_record(rec_name)
+    function dr = data_record(rec_name, dfs)
       dr.record_name = rec_name;
       dr.time_name = ['T' rec_name];
       dr.n_alloc = 0;
@@ -20,11 +20,12 @@ classdef data_record < handle
       dr.min_alloc = 10000;
       dr.n_flds = 0;
       dr.max_time = [];
+      dr.dfs = dfs;
     end
     
     function was_new = process_record(dr, str)
       % was_new = dr.process_record(str);
-      % str is a json-encoded string of data
+      % str is a struct decoded from a json string of data
       % was_new will be non-zero the first time this record is processed
       flds = fieldnames(str);
       if dr.n_flds == 0
@@ -34,9 +35,9 @@ classdef data_record < handle
         dr.ix = (1:dr.n_alloc)';
         for i = 1:dr.n_flds
           w = length(str.(flds{i}));
-          dr.datainfo.(flds{i}).w = w;
-          if ~isfield(dr.datainfo.(flds{i}),'interp')
-            dr.datainfo.(flds{i}).interp = 1;
+          dr.dfs.varinfo.(flds{i}).w = w;
+          if ~isfield(dr.dfs.varinfo.(flds{i}),'interp')
+            dr.dfs.varinfo.(flds{i}).interp = 1;
           end
           dr.data.(flds{i}) = zeros(dr.min_alloc,w) * NaN;
         end
@@ -70,7 +71,7 @@ classdef data_record < handle
         for i = 1:length(flds)
           dr.data.(flds{i}) = [
             dr.data.(flds{i});
-            zeros(dr.min_alloc,dr.datainfo.(flds{i}).w) * NaN ];
+            zeros(dr.min_alloc,dr.dfs.varinfo.(flds{i}).w) * NaN ];
         end
         dr.n_alloc = dr.n_alloc + dr.min_alloc;
         dr.ix = (1:dr.n_alloc)';

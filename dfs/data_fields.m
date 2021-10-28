@@ -34,7 +34,16 @@ classdef data_fields < handle
     % identified, it will be placed under
     % dfs.fields.unassociated.vars.(var)
     fields
-    recbyvar % struct mapping var_name to rec_name
+    % struct mapping var_name to struct with details
+    %   rec_name: The record containing the variable
+    %   w: The variable width for arrays. Defaults to 0 (undefined)
+    %   interp: boolean
+    % If a variable reports multiple values in each record, there are two
+    % possible interpretations. If interp is false, each value is treated
+    % as an independent variable and plotted as multiple lines. If interp
+    % is true, the values are treated as multiple readings of the same
+    % sensor at a faster rate than the record is reported.
+    varinfo
     figbyrec % struct mapping rec_name to graph_figs index
 
     % cur_col will record fields in the current column
@@ -83,7 +92,7 @@ classdef data_fields < handle
       end
       dfs.cur_x = dfs.opts.min_x + dfs.opts.h_padding;
       dfs.cur_y = dfs.opts.max_y;
-      dfs.records = data_records();
+      dfs.records = data_records(dfs);
       dfs.figbgcolor = get(dfs.fig,'Color');
       dfs.graph_figs = {};
       dfs.dfuicontextmenu = uicontextmenu(dfs.fig);
@@ -131,19 +140,19 @@ classdef data_fields < handle
     end
 
     function rec_name_out = check_recname(dfs, var_name, rec_name)
-      if isfield(dfs.recbyvar, var_name)
-        if nargin >= 3 && ~strcmp(rec_name, dfs.recbyvar.(var_name))
+      if isfield(dfs.varinfo, var_name)
+        if nargin >= 3 && ~strcmp(rec_name, dfs.varinfo.(var_name).rec_name)
           warning('Var %s found in rec %s, but field def said %s', ...
-            var_name, dfs.recbyvar.(var_name), rec_name);
+            var_name, dfs.varinfo.(var_name).rec_name, rec_name);
         end
-        rec_name_out = dfs.recbyvar.(var_name);
+        rec_name_out = dfs.varinfo.(var_name).rec_name;
       else
         rec_name_out = 'unassociated';
       end
     end
 
-    function df = field(dfs, rec_name, var_name, fmt, signed)
-      % df = dfs.field(rec_name, var_name, fmt, signed)
+    function df = field(dfs, var_name, fmt, signed)
+      % df = dfs.field(var_name, fmt, signed)
       % rec_name is a sanity check for the moment, then will be eliminated
       % var_name is the variable name
       % fmt is printf format string for the display
@@ -151,12 +160,12 @@ classdef data_fields < handle
       if nargin < 5
         signed = false;
       end
-      rec_name = dfs.check_recname(var_name, rec_name);
+      rec_name = dfs.check_recname(var_name);
       if ~isfield(dfs.fields, rec_name) || ...
           ~isfield(dfs.fields.(rec_name).vars,var_name)
         dfs.fields.(rec_name).vars.(var_name) = {};
       end
-      df_int = data_field(dfs, rec_name, var_name, fmt, signed);
+      df_int = data_field(dfs, var_name, fmt, signed);
       dfs.fields.(rec_name).vars.(var_name){end+1} = df_int;
       dfs.cur_col.fields{end+1} = df_int;
       dfs.cur_col.n_rows = dfs.cur_col.n_rows+1;
@@ -200,7 +209,7 @@ classdef data_fields < handle
     function process_record(dfs,rec_name,str)
       % dfs.process_record(rec_name, str)
       % rec_name is the record name
-      % str is the json-encoded data
+      % str is the decoded json data
       % str is currently optional, in which case
       % data_records.process_record is not called, but it is not entirely
       % clear when this would be called. I guess it could be called when
@@ -208,12 +217,12 @@ classdef data_fields < handle
       if nargin >= 3
         was_new = dfs.records.process_record(rec_name,str);
         if was_new
-          % First update dfs.recbyvar with the new record
+          % First update dfs.varinfo with the new record
           if isfield(dfs.records.records,rec_name) % and it better be!
             dr = dfs.records.records.(rec_name);
             vars = fieldnames(dr.data);
             for i=1:length(vars)
-              dfs.recbyvar.(vars{i}) = rec_name;
+              dfs.varinfo.(vars{i}).rec_name = rec_name;
             end
           end
           if isfield(dfs.fields,'unassociated')
@@ -318,7 +327,7 @@ classdef data_fields < handle
       dfs.figbyrec = fbr;
     end
     
-    function fignum = new_graph(dfs, rec_name, var_name, mode, fignum, axisnum)
+    function fignum = new_graph(dfs, var_name, mode, fignum, axisnum)
       % fignum = dfs.new_graph(rec_name, var_name, mode, fign, axisnum)
       % rec_name is the variables record. Currently a placeholder
       % var_name is the variable name
@@ -338,7 +347,7 @@ classdef data_fields < handle
           axisnum = 0;
         end
       end
-      rec_name = dfs.check_recname(var_name, rec_name);
+      rec_name = dfs.check_recname(var_name);
       dfig.new_graph(rec_name, var_name, mode, axisnum);
       fignum = dfig.fignum;
       if mode == "new_fig"
@@ -360,9 +369,8 @@ classdef data_fields < handle
       datum = get(dfs.fig,'userdata');
     end
     
-    function set_interp(dfs, recname, datum, val)
-      dr = dfs.records.records.(recname);
-      dr.datainfo.(datum).interp = val;
+    function set_interp(dfs, var_name, val)
+      dfs.varinfo.(var_name).interp = val;
     end
     
     function set_connection(dfs, hostname, port)
@@ -476,10 +484,10 @@ classdef data_fields < handle
       end
       lbl = gco;
       df = get(lbl,'userdata');
-      rec_name = df.rec_name;
+      % rec_name = df.rec_name;
       var_name = df.var_name;
       dfs = df.flds;
-      dfs.new_graph(rec_name, var_name, mode, fignum, axisnum);
+      dfs.new_graph(var_name, mode, fignum, axisnum);
     end
   end
 end

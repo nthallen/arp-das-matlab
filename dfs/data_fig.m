@@ -3,6 +3,7 @@ classdef data_fig < handle
     fig % figure
     fignum % The data_fig index in the data_fields object
     axes % cell array of data_axis
+    dfs % data_fields object
     drs % data_records
     recs % maps rec_name to axes and line where specific vars are displayed
     axis_vec % just the axes
@@ -12,6 +13,7 @@ classdef data_fig < handle
     function df = data_fig(dfs, fignum)
       df.fig = figure;
       df.fignum = fignum;
+      df.dfs = dfs;
       df.drs = dfs.records;
       df.recs = [];
       df.axes = {};
@@ -97,7 +99,8 @@ classdef data_fig < handle
             
             D = dr.data_vector(var,V);
             w = size(D,2);
-            if w == 1 || dr.datainfo.(var).interp == 0
+            % May need to be more careful accessing varinfo here
+            if w == 1 || df.dfs.varinfo.(var).interp == 0
               TI = T - df.drs.max_time;
               DI = D;
             else % doing time interpolation

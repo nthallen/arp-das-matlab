@@ -4,7 +4,6 @@ classdef data_field < handle
   % data stream
   properties(GetAccess = public)
     flds % The parent data_fields object
-    rec_name
     var_name
     fmt
     lbl_name
@@ -15,15 +14,14 @@ classdef data_field < handle
     fld_height
   end
   methods
-    function df = data_field(flds, rec_name, var_name, fmt, signed)
+    function df = data_field(flds, var_name, fmt, signed)
       if nargin < 5
         signed = false;
       end
       df.flds = flds;
       df.fmt = fmt;
-      df.rec_name = rec_name;
       df.var_name = var_name;
-      df.lbl_name = [rec_name '_lbl'];
+      df.lbl_name = [var_name '_lbl'];
       lbltxt = [var_name ':'];
       df.lbl = uicontrol(flds.fig, ...
         'Style', 'text', 'String', lbltxt, ...

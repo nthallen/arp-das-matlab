@@ -2,17 +2,19 @@ classdef data_records < handle
   properties
     records % struct mapping rec_name to data_record
     max_time
+    dfs % the data_fields parent
   end
   methods
-    function drs = data_records()
+    function drs = data_records(dfs)
       drs.max_time = [];
+      drs.dfs = dfs;
     end
     
     function add_record(drs,rec_name)
       % data_records.add_record(rec_name)
       % May be called redundantly without harm.
       if ~isfield(drs.records, rec_name)
-        drs.records.(rec_name) = data_record(rec_name);
+        drs.records.(rec_name) = data_record(rec_name, drs.dfs);
       end
     end
     
