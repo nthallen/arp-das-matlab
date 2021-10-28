@@ -39,10 +39,10 @@ classdef data_fig < handle
         the_axis = data_axis(df, var_name);
         df.axes{end+1} = the_axis;
         df.axis_vec(end+1) = df.axes{end}.axis;
-        axnum = length(df.axes);
-        uimenu(df.mymenu,'Text',sprintf('Axis %d',axnum), ...
+        axisnum = length(df.axes);
+        uimenu(df.mymenu,'Text',sprintf('Axis %d',axisnum), ...
           'Callback', { @data_fields.context_callback, ...
-          "cur_axes", df.fignum, axnum });
+          "cur_axes", df.fignum, axisnum });
       else
         the_axis = df.axes{axisnum};
       end
@@ -109,9 +109,9 @@ classdef data_fig < handle
               end
             end
             for axi=1:size(axn,1)
-              ax = df.axis_vec{axn(axi,1)};
+              ax = df.axis_vec(axn(axi,1));
               n = axn(axi,2);
-              lns = findobj(ax.axis,'type','line','parent',ax.axis);
+              lns = findobj(ax,'type','line','parent',ax);
               if n > 0 && n <= length(lns)
                 set(lns(n),'XData',TI,'YData',DI);
               else

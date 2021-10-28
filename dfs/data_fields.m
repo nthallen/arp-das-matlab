@@ -234,6 +234,7 @@ classdef data_fields < handle
           end
           % Now go through figs with unassociated variables
           if isfield(dfs.figbyrec,'unassociated')
+            reindex = false;
             figi = dfs.figbyrec.unassociated;
             for i = 1:length(figi)
               dfig = dfs.graph_figs{figi(i)};
@@ -253,9 +254,11 @@ classdef data_fields < handle
                   end
                   fprintf(1,'fig(%d) Var %s associated with rec %s\n', ...
                     i, vars{j}, new_rec_name);
+                  reindex = true;
                 end
               end
             end
+            if reindex; dfs.index_figs; end
           end
         end
       end
@@ -275,15 +278,44 @@ classdef data_fields < handle
       end
       % Now go through graph_figs
       if nargin >= 3
-        for i=1:length(dfs.graph_figs)
-          dfs.graph_figs{i}.update(rec_name);
+        if isempty(dfs.figbyrec) || ~isfield(dfs.figbyrec,rec_name)
+          fn = [];
+        else
+          fn = dfs.figbyrec.(rec_name);
         end
+      else
+        fn = 1:length(dfs.graph_figs);
+      end
+      for i=fn
+        dfs.graph_figs{i}.update(rec_name);
       end
     end
     
     function dfig = new_graph_fig(dfs)
       dfs.n_figs = dfs.n_figs+1;
       dfig = data_fig(dfs, dfs.n_figs);
+    end
+    
+    function index_figs(dfs)
+      % dfs.index_figs;
+      % Looks through graph_figs, and maps rec_name to figs,
+      % updating figsbyrec.
+      fbr = [];
+      for i = 1:length(dfs.graph_figs)
+        dfig = dfs.graph_figs{i};
+        if ~isempty(dfig.recs)
+          recs = fieldnames(dfig.recs);
+          for j = 1:length(recs)
+            rec_name = recs{j};
+            if isempty(fbr) || ~isfield(fbr, rec_name)
+              fbr.(rec_name) = i;
+            else
+              fbr.(rec_name) = unique([fbr.(rec_name) i]);
+            end
+          end
+        end
+      end
+      dfs.figbyrec = fbr;
     end
     
     function fignum = new_graph(dfs, rec_name, var_name, mode, fignum, axisnum)
@@ -312,6 +344,7 @@ classdef data_fields < handle
       if mode == "new_fig"
         dfs.graph_figs{dfig.fignum} = dfig;
       end
+      dfs.index_figs;
     end
     
     function m = add_menu(dfs, title)
