@@ -26,17 +26,21 @@ classdef data_axis < handle
       for i=1:length(da.lines)
         rec_name = da.lines{i}.rec;
         var_name = da.lines{i}.var;
-        dr = da.dfig.drs.records.(rec_name);
-        [T,V] = dr.time_vector(200);
-        D = dr.data_vector(var_name,V);
-        T0 = da.dfig.drs.max_time;
-        if isempty(T) || isempty(T0)
-          if isempty(T0)
-            warning('T0 is empty');
+        if isfield(da.dfig.drs.records, rec_name)
+          dr = da.dfig.drs.records.(rec_name);
+          [T,V] = dr.time_vector(200);
+          D = dr.data_vector(var_name,V);
+          T0 = da.dfig.drs.max_time;
+          if isempty(T) || isempty(T0)
+            if isempty(T0)
+              warning('T0 is empty');
+            end
+            plot(da.axis, nan, nan);
+          else
+            plot(da.axis, T-T0, D);
           end
-          plot(da.axis, nan, nan);
         else
-          plot(da.axis, T-T0, D);
+          plot(da.axis,nan,nan);
         end
         hold(da.axis,'on');
       end

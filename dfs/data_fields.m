@@ -35,6 +35,7 @@ classdef data_fields < handle
     % dfs.fields.unassociated.vars.(var)
     fields
     recbyvar % struct mapping var_name to rec_name
+    figbyrec % struct mapping rec_name to graph_figs index
 
     % cur_col will record fields in the current column
     % We need to keep this until the column is closed, so we can
@@ -128,7 +129,19 @@ classdef data_fields < handle
       dfs.cur_col.groups = {};
       dfs.cur_col.plots = {};
     end
-    
+
+    function rec_name_out = check_recname(dfs, var_name, rec_name)
+      if isfield(dfs.recbyvar, var_name)
+        if nargin >= 3 && ~strcmp(rec_name, dfs.recbyvar.(var_name))
+          warning('Var %s found in rec %s, but field def said %s', ...
+            var_name, dfs.recbyvar.(var_name), rec_name);
+        end
+        rec_name_out = dfs.recbyvar.(var_name);
+      else
+        rec_name_out = 'unassociated';
+      end
+    end
+
     function df = field(dfs, rec_name, var_name, fmt, signed)
       % df = dfs.field(rec_name, var_name, fmt, signed)
       % rec_name is a sanity check for the moment, then will be eliminated
@@ -138,16 +151,7 @@ classdef data_fields < handle
       if nargin < 5
         signed = false;
       end
-      % dfs.records.add_record(rec_name);
-      if isfield(dfs.recbyvar, var_name)
-        if ~isempty(rec_name) && ~strcmp(rec_name, dfs.recbyvar.(var_name))
-          warning('Var %s found in rec %s, but field def said %s', ...
-            var_name, dfs.recbyvar.(var_name), rec_name);
-        end
-        rec_name = dfs.recbyvar.(var_name);
-      else
-        rec_name = 'unassociated';
-      end
+      rec_name = dfs.check_recname(var_name, rec_name);
       if ~isfield(dfs.fields, rec_name) || ...
           ~isfield(dfs.fields.(rec_name).vars,var_name)
         dfs.fields.(rec_name).vars.(var_name) = {};
@@ -203,19 +207,54 @@ classdef data_fields < handle
       % a graph is created.
       if nargin >= 3
         was_new = dfs.records.process_record(rec_name,str);
-        if was_new && isfield(dfs.fields,'unassociated')
-          % Go through our unassociated vars in fields and figures and
-          % reclassify them if they are now defined
-          dr = dfs.records.records.(rec_name);
-          vars = fieldnames(dr.data);
-          for i=1:length(vars)
-            if isfield(dfs.fields.unassociated.vars,vars{i})
-              dfs.fields.(rec_name).vars.(vars{i}) = ...
-                dfs.fields.unassociated.vars.(vars{i});
-              dfs.fields.unassociated.vars = ...
-                rmfield(dfs.fields.unassociated.vars, vars{i});
-              fprintf(1,'Field Var %s associated with rec %s\n', ...
-                vars{i}, rec_name);
+        if was_new
+          % First update dfs.recbyvar with the new record
+          if isfield(dfs.records.records,rec_name) % and it better be!
+            dr = dfs.records.records.(rec_name);
+            vars = fieldnames(dr.data);
+            for i=1:length(vars)
+              dfs.recbyvar.(vars{i}) = rec_name;
+            end
+          end
+          if isfield(dfs.fields,'unassociated')
+            % Go through our unassociated vars in fields and figures and
+            % reclassify them if they are now defined
+            dr = dfs.records.records.(rec_name);
+            vars = fieldnames(dr.data);
+            for i=1:length(vars)
+              if isfield(dfs.fields.unassociated.vars,vars{i})
+                dfs.fields.(rec_name).vars.(vars{i}) = ...
+                  dfs.fields.unassociated.vars.(vars{i});
+                dfs.fields.unassociated.vars = ...
+                  rmfield(dfs.fields.unassociated.vars, vars{i});
+                fprintf(1,'Field Var %s associated with rec %s\n', ...
+                  vars{i}, rec_name);
+              end
+            end
+          end
+          % Now go through figs with unassociated variables
+          if isfield(dfs.figbyrec,'unassociated')
+            figi = dfs.figbyrec.unassociated;
+            for i = 1:length(figi)
+              dfig = dfs.graph_figs{figi(i)};
+              if isfield(dfig.recs,'unassociated')
+                vars = fieldnames(dfig.recs.unassociated.vars);
+                for j = 1:length(vars)
+                  var_name = vars{j};
+                  new_rec_name = dfs.check_recname(var_name);
+                  if ~strcmp(new_rec_name, 'unassociated')
+                    % now move this record from:
+                    %   dfig.recs.unassociated.vars.(var_name) to
+                    %     dfig.recs.(new_rec_name).vars.(var_name)
+                    dfig.recs.(new_rec_name).vars.(var_name) = ...
+                      dfig.recs.unassociated.vars.(var_name);
+                    dfig.recs.unassociated.vars = ...
+                      rmfield(dfig.recs.unassociated.vars, var_name);
+                  end
+                  fprintf(1,'fig(%d) Var %s associated with rec %s\n', ...
+                    i, vars{j}, new_rec_name);
+                end
+              end
             end
           end
         end
@@ -248,7 +287,16 @@ classdef data_fields < handle
     end
     
     function fignum = new_graph(dfs, rec_name, var_name, mode, fignum, axisnum)
-      dfs.records.add_record(rec_name);
+      % fignum = dfs.new_graph(rec_name, var_name, mode, fign, axisnum)
+      % rec_name is the variables record. Currently a placeholder
+      % var_name is the variable name
+      % mode is one of 'new_fig', 'cur_axes' or 'new_axes'
+      % fign is the fignum previously returned by new_graph(...,'new_fig').
+      %   Required except for mode 'new_fig'
+      % axisnum is the axis number within an existing figure.
+      %   Required for mode 'cur_axes'
+      % fignum is the figure number (index into dfs.graph_figs)
+      
       if mode == "new_fig"
         dfig = dfs.new_graph_fig();
         axisnum = 0;
@@ -258,6 +306,7 @@ classdef data_fields < handle
           axisnum = 0;
         end
       end
+      rec_name = dfs.check_recname(var_name, rec_name);
       dfig.new_graph(rec_name, var_name, mode, axisnum);
       fignum = dfig.fignum;
       if mode == "new_fig"

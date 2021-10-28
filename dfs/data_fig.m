@@ -4,7 +4,7 @@ classdef data_fig < handle
     fignum % The data_fig index in the data_fields object
     axes % cell array of data_axis
     drs % data_records
-    recs % identifies axes where specific vars are displayed
+    recs % maps rec_name to axes and line where specific vars are displayed
     axis_vec % just the axes
     mymenu % uimenu for this figure
   end
@@ -50,10 +50,10 @@ classdef data_fig < handle
       if isfield(df.recs.(rec_name).vars, var_name)
         df.recs.(rec_name).vars.(var_name) = [
           df.recs.(rec_name).vars.(var_name)
-          {the_axis n} ];
+          axisnum n ];
       else
         df.recs.(rec_name).vars.(var_name) = ...
-          { the_axis n};
+          [ axisnum n ];
       end
       df.redraw();
     end
@@ -109,8 +109,8 @@ classdef data_fig < handle
               end
             end
             for axi=1:size(axn,1)
-              ax = axn{axi,1};
-              n = axn{axi,2};
+              ax = df.axis_vec{axn(axi,1)};
+              n = axn(axi,2);
               lns = findobj(ax.axis,'type','line','parent',ax.axis);
               if n > 0 && n <= length(lns)
                 set(lns(n),'XData',TI,'YData',DI);
