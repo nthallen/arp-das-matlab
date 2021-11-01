@@ -26,7 +26,8 @@ classdef data_fig < handle
       set(df.fig,'CloseRequestFcn', @df.closereq);
     end
     
-    function new_graph(df, rec_name, var_name, mode, axisnum)
+    function axnum = new_graph(df, rec_name, var_name, mode, axisnum)
+      % axnum = new_graph(df, rec_name, var_name, mode, axisnum)
       % use the figure's mode to decide where to put it
       % for starters, always create a new axis
       % @param mode: "new_fig", "new_axes", "cur_axes"
@@ -58,6 +59,7 @@ classdef data_fig < handle
           [ axisnum n ];
       end
       df.redraw();
+      axnum = axisnum;
     end
     
     function redraw(df)

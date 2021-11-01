@@ -10,7 +10,10 @@ classdef data_axis < handle
     function da = data_axis(dfig, label)
       da.dfig = dfig;
       % da.recs = dfig.recs;
-      da.axis = axes(dfig.fig,'visible','off');
+      da.axis = axes(dfig.fig,'visible','on');
+      if isfield(da.axis,'Toolbar') && isfield(da.axis.Toolbar,'Visible')
+        da.axis.Toolbar.Visible = 'Off';
+      end
       da.label = strrep(label,'_','\_');
     end
     

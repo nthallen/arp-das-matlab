@@ -12,19 +12,20 @@ classdef data_fields < handle
 
     % struct containing various options. These can be modified by passing
     % option, value pairs in to the data_fields constructor:
-    %       min_y
-    %       max_y
-    %       min_x
-    %       max_x
     %       v_padding % space at top and bottom of column
     %       v_leading % space between rows
     %       h_padding % space between edge and outer columns
     %       h_leading % space between label and text and unit
     %       col_leading % horizontal space between columns
     %       txt_padding
+    %       title
     opts
     cur_x
+    min_x
+    max_x
     cur_y
+    min_y
+    max_y
     records % data_records object
 
     % fields are indexed like records, i.e.
@@ -53,8 +54,10 @@ classdef data_fields < handle
     % cur_col.n_rows will be a scalar count of elements in fields
     % cur_col.max_lbl_width will be the current maximum label width
     % cur_col.max_txt_width will be the current maximum text width
+    % cur_col.max_btn_x is the rightmost extent of all buttons
     cur_col
     graph_figs % cell array of data_fig objects
+    plot_defs % map plot IDs to data_plot objects
     dfuicontextmenu % uicontextmenu for data_field lables
     connectmenu % connect menu
     gimenu % The 'Graph in:' submenu
@@ -67,10 +70,10 @@ classdef data_fields < handle
       dfs.n_figs = 0;
       set(dfs.fig,'units','pixels');
       d = get(dfs.fig,'Position');
-      dfs.opts.min_x = 0;
-      dfs.opts.max_x = d(3);
-      dfs.opts.min_y = d(4);
-      dfs.opts.max_y = d(4);
+      dfs.min_x = 0;
+      dfs.max_x = d(3);
+      dfs.min_y = d(4);
+      dfs.max_y = d(4);
       dfs.opts.v_padding = 10;
       dfs.opts.v_leading = 3;
       dfs.opts.h_padding = 20;
@@ -79,6 +82,9 @@ classdef data_fields < handle
       dfs.opts.txt_padding = 5;
       dfs.opts.txt_font = 'Courier New';
       dfs.opts.txt_fontsize = 10;
+      dfs.opts.btn_font = 'Arial';
+      dfs.opts.btn_fontsize = 12;
+      dfs.opts.title = '';
       dfs.data_conn.n = 0;
       dfs.data_conn.t = [];
       dfs.data_conn.connected = 0;
@@ -90,11 +96,12 @@ classdef data_fields < handle
           error('MATLAB:LE:badopt', 'Invalid option: "%s"', fld);
         end
       end
-      dfs.cur_x = dfs.opts.min_x + dfs.opts.h_padding;
-      dfs.cur_y = dfs.opts.max_y;
+      dfs.cur_x = dfs.min_x + dfs.opts.h_padding;
+      dfs.cur_y = dfs.max_y;
       dfs.records = data_records(dfs);
       dfs.figbgcolor = get(dfs.fig,'Color');
       dfs.graph_figs = {};
+      dfs.plot_defs = [];
       dfs.dfuicontextmenu = uicontextmenu(dfs.fig);
       dfs.gimenu = uimenu(dfs.dfuicontextmenu,'Label','Graph in:');
       uimenu(dfs.gimenu,'Label','New figure', ...
@@ -107,13 +114,12 @@ classdef data_fields < handle
     function start_col(dfs)
       dfs.cur_col.fields = {};
       dfs.cur_col.groups = {};
-      dfs.cur_col.plots = {};
+      dfs.cur_col.btns = {};
       dfs.cur_col.n_rows = 0;
       dfs.cur_col.max_lbl_width = 0;
       dfs.cur_col.max_txt_width = 0;
-      dfs.cur_col.max_grp_width = 0;
-      dfs.cur_col.max_plt_width = 0;
-      dfs.cur_y = dfs.opts.max_y - dfs.opts.v_padding;
+      dfs.cur_col.max_btn_x = 0;
+      dfs.cur_y = dfs.max_y - dfs.opts.v_padding;
       % dfs.cur_x = dfs.cur_x + dfs.opts.col_leading;
     end
     
@@ -131,9 +137,20 @@ classdef data_fields < handle
         pos(1) = r_edge - pos(3);
         fld.txt.Position = pos;
       end
+      for i=1:length(dfs.cur_col.btns)
+        btn = dfs.cur_col.btns{i};
+        w = dfs.cur_col.max_btn_x - btn.Position(1);
+        btn.Position(3) = w;
+      end
+      if dfs.cur_col.max_btn_x > r_edge
+        r_edge = dfs.cur_col.max_btn_x;
+      end
       % update cur_x to the right edge of righthand fields
       % plus col_leading, so left of new column
       dfs.cur_x = r_edge + dfs.opts.col_leading;
+      if dfs.cur_x > dfs.max_x
+        dfs.max_x = dfs.cur_x;
+      end
       dfs.cur_col.fields = {};
       dfs.cur_col.groups = {};
       dfs.cur_col.plots = {};
@@ -184,26 +201,124 @@ classdef data_fields < handle
         df_int.txt_width, ...
         df_int.fld_height];
       dfs.cur_y = dfs.cur_y - dfs.opts.v_leading;
-      if dfs.cur_y < dfs.opts.min_y
-        dfs.opts.min_y = dfs.cur_y;
+      if dfs.cur_y < dfs.min_y
+        dfs.min_y = dfs.cur_y;
       end
       if nargout > 0; df = df_int; end
     end
-    
+
+    function data_plot(dfs,ID,varargin)
+      plt = data_plot(ID,varargin{:});
+      dfs.plot_defs.(ID) = plt;
+      boxdim = 14; % size of a checkbox
+      boxwid = 20; % width required for checkbox (add to extent)
+      bbg = dfs.figbgcolor;
+      if ~isempty(plt.opts.label)
+        parent = dfs.fig;
+        x = dfs.cur_x;
+        box_x = x;
+        if ~plt.isgroup
+          x = x + boxwid;
+        end
+        % make a pushbutton to invoke the group or plot
+        callback = @(~,~)show_plot(dfs,ID);
+        h = uicontrol(parent, 'Style', 'PushButton', ...
+          'String', plt.opts.label, ...
+          'Callback', callback, 'HorizontalAlignment', 'left', ...
+          'FontName', dfs.opts.btn_font, ...
+          'FontSize', dfs.opts.btn_fontsize, ...
+          'BackgroundColor', bbg );
+        e = get(h,'Extent');
+        dims = e(3:4) + [dfs.opts.h_padding dfs.opts.v_padding];
+        dfs.cur_y = dfs.cur_y - dims(2);
+        set(h,'Position',[x dfs.cur_y dims]);
+        dfs.cur_col.btns{end+1} = h;
+
+        if ~plt.isgroup
+          box_y = dfs.cur_y + (dims(2)-boxdim)/2;
+          uicontrol(parent,'Style','Checkbox','Tag',ID, ...
+            'Position', [ box_x box_y boxdim boxdim ], ...
+            'Value', 0, 'Max', 1 );
+        end
+        x = x + dims(1);
+        if x > dfs.cur_col.max_btn_x
+          dfs.cur_col.max_btn_x = x;
+        end
+        dfs.cur_y = dfs.cur_y - dfs.opts.v_leading;
+        if dfs.cur_y < dfs.min_y
+          dfs.min_y = dfs.cur_y;
+        end
+      end
+    end
+
+    function [fignum, axnum] = show_plot(dfs,ID,fign_in)
+      % dfig = dfs.show_plot(ID[, dfin])
+      % Displays the specified plot or group in a new data_fig.
+      % dfs is a data_fields object
+      % ID is the unique string identify the previously defined data_plot
+      %   object.
+      % fign_in is for internal use only (for adding another
+      %   pane to an existing data_fig in a group)
+      % fignum is the index of the newly created data_fig object (or the
+      %   one passed in)
+      plt = dfs.plot_defs.(ID);
+      if plt.isgroup
+        if nargin >= 4
+          warning('Cannot include a group (%s) in a group',ID);
+          return;
+        end
+        plots = plt.opts.plots;
+        if isempty(plots); return; end
+        [fignum,axnum] = dfs.show_plot(plots{1});
+        for i=2:length(plots)
+          dfs.show_plot(plots{i},fignum);
+        end
+      else
+        vars = plt.opts.vars;
+        if isempty(vars); return; end
+        if nargin >= 3
+          [fignum,axnum] = dfs.new_graph(vars{1},'new_axes',fign_in);
+        else
+          [fignum,axnum] = dfs.new_graph(vars{1},'new_fig');
+        end
+        for i = 2:length(vars)
+          dfs.new_graph(vars{i},'cur_axes',fignum,axnum);
+        end
+      end
+    end
+
+    function graph_selected(dfs)
+
+    end
+
     function resize(dfs)
+      h = uicontrol(dfs.fig,'String','Graph Selected', ...
+          'Callback',@(~,~)graph_selected(dfs));
+
+      e = h.Extent;
+      dims = ceil(e(3:4)*1.1);
+      if dims(1) > dfs.max_x
+        dfs.max_x = dims(1);
+      end
+      x = (dfs.max_x - e(3))/2;
+      y = dfs.min_y - e(4) - 3*dfs.opts.v_padding;
+      dfs.min_y = y;
+      h.Position = [x y dims];
+      dfs.min_y = dfs.min_y-dfs.opts.v_padding;
+
       pos = dfs.fig.Position;
+      pos(2) = pos(2) + dfs.min_y;
       pos(3) = dfs.cur_x;
-      pos(4) = dfs.opts.max_y - dfs.opts.min_y;
+      pos(4) = dfs.max_y - dfs.min_y;
       dfs.fig.Position = pos;
       dfs.fig.Resize = 'Off';
       % set(dfs.fig,'Resize','Off');
       c = findobj(dfs.fig,'type','uicontrol')';
-      dy = dfs.opts.min_y-dfs.opts.v_padding;
       for ctrl = c
-        ctrl.Position(2) = ctrl.Position(2)-dy;
+        ctrl.Position(2) = ctrl.Position(2)-dfs.min_y;
       end
-      dfs.opts.max_y = dfs.opts.max_y - dy;
-      dfs.opts.min_y = dfs.opts.min_y - dy;
+      dfs.max_y = dfs.max_y - dfs.min_y;
+      dfs.min_y = 0;
     end
     
     function process_record(dfs,rec_name,str)
@@ -327,9 +442,8 @@ classdef data_fields < handle
       dfs.figbyrec = fbr;
     end
     
-    function fignum = new_graph(dfs, var_name, mode, fignum, axisnum)
-      % fignum = dfs.new_graph(rec_name, var_name, mode, fign, axisnum)
-      % rec_name is the variables record. Currently a placeholder
+    function [fignum, axnum] = new_graph(dfs, var_name, mode, fignum, axisnum)
+      % [fignum, axnum] = dfs.new_graph(var_name, mode, fign, axisnum)
       % var_name is the variable name
       % mode is one of 'new_fig', 'cur_axes' or 'new_axes'
       % fign is the fignum previously returned by new_graph(...,'new_fig').
@@ -337,6 +451,7 @@ classdef data_fields < handle
       % axisnum is the axis number within an existing figure.
       %   Required for mode 'cur_axes'
       % fignum is the figure number (index into dfs.graph_figs)
+      % axnum is the axis number (index into df.axes)
       
       if mode == "new_fig"
         dfig = dfs.new_graph_fig();
@@ -348,12 +463,15 @@ classdef data_fields < handle
         end
       end
       rec_name = dfs.check_recname(var_name);
-      dfig.new_graph(rec_name, var_name, mode, axisnum);
+      axisnum = dfig.new_graph(rec_name, var_name, mode, axisnum);
       fignum = dfig.fignum;
       if mode == "new_fig"
         dfs.graph_figs{dfig.fignum} = dfig;
       end
       dfs.index_figs;
+      if nargout > 1
+        axnum = axisnum;
+      end
     end
     
     function m = add_menu(dfs, title)
@@ -460,7 +578,7 @@ classdef data_fields < handle
       end
       for i = 1:length(dfs.graph_figs)
         df = dfs.graph_figs{i};
-        if ~isempty(df.fig)
+        if ~isempty(df) && ~isempty(df.fig)
           close(df.fig);
         end
       end
