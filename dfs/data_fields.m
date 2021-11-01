@@ -288,7 +288,14 @@ classdef data_fields < handle
     end
 
     function graph_selected(dfs)
-
+      % fprintf(1,'graph_selected()\n');
+      h = findobj(dfs.fig,'style','checkbox','value', 1);
+      plots = {h.Tag};
+      if isempty(plots); return; end
+      fignum = dfs.show_plot(plots{1});
+      for i=2:length(plots)
+        dfs.show_plot(plots{i},fignum);
+      end
     end
 
     function resize(dfs)
@@ -427,7 +434,7 @@ classdef data_fields < handle
       fbr = [];
       for i = 1:length(dfs.graph_figs)
         dfig = dfs.graph_figs{i};
-        if ~isempty(dfig.recs)
+        if ~isempty(dfig) && ~isempty(dfig.recs)
           recs = fieldnames(dfig.recs);
           for j = 1:length(recs)
             rec_name = recs{j};

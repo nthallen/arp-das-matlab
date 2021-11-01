@@ -26,6 +26,7 @@ classdef data_axis < handle
     
     function redraw(da)
       cla(da.axis);
+      % fprintf(1,'redraw()\n');
       for i=1:length(da.lines)
         rec_name = da.lines{i}.rec;
         var_name = da.lines{i}.var;
@@ -38,11 +39,14 @@ classdef data_axis < handle
             if isempty(T0)
               warning('T0 is empty');
             end
+            % fprintf(1,'%d: %s - empty plot\n', i, var_name);
             plot(da.axis, nan, nan);
           else
+            % fprintf(1,'%d: %s - non-empty plot\n', i, var_name);
             plot(da.axis, T-T0, D);
           end
         else
+          % fprintf(1,'%d: %s - empty plot\n', i, var_name);
           plot(da.axis,nan,nan);
         end
         hold(da.axis,'on');
@@ -50,6 +54,7 @@ classdef data_axis < handle
       hold(da.axis,'off');
       set(da.axis,'xlim',[-200 0]);
       ylabel(da.axis,da.label);
+      % drawnow;
     end
   end
 end

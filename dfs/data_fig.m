@@ -41,7 +41,11 @@ classdef data_fig < handle
       if mode == "new_fig" || mode == "new_axes"
         the_axis = data_axis(df, var_name);
         df.axes{end+1} = the_axis;
-        df.axis_vec(end+1) = df.axes{end}.axis;
+        if isempty(df.axis_vec)
+          df.axis_vec = df.axes{end}.axis;
+        else
+          df.axis_vec(end+1) = df.axes{end}.axis;
+        end
         axisnum = length(df.axes);
         uimenu(df.mymenu,'Text',sprintf('Axis %d',axisnum), ...
           'Callback', { @data_fields.context_callback, ...
@@ -120,7 +124,10 @@ classdef data_fig < handle
               if n > 0 && n <= length(lns)
                 set(lns(n),'XData',TI,'YData',DI);
               else
-                warning('Line %d not in axis', n);
+                % warning('Line %d not in axis', n);
+                % It makes sense that this line is not here when
+                % we are redrawing. Disable the warning, since it is
+                % ugly and not helpful
               end
             end
           end
