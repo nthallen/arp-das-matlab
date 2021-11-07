@@ -71,7 +71,7 @@ classdef data_fields < handle
       set(dfs.fig,'units','pixels');
       d = get(dfs.fig,'Position');
       dfs.min_x = 0;
-      dfs.max_x = d(3);
+      dfs.max_x = 400;
       dfs.min_y = d(4);
       dfs.max_y = d(4);
       dfs.opts.v_padding = 10;
@@ -315,7 +315,7 @@ classdef data_fields < handle
 
       pos = dfs.fig.Position;
       pos(2) = pos(2) + dfs.min_y;
-      pos(3) = dfs.cur_x;
+      pos(3) = dfs.max_x;
       pos(4) = dfs.max_y - dfs.min_y;
       dfs.fig.Position = pos;
       dfs.fig.Resize = 'Off';
