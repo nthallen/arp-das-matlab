@@ -204,6 +204,7 @@ elseif strcmp(func,'resize')
   f.figpos(3) = f.xmax;
   f.figpos(4) = f.figpos(4) - f.ymin;
   set(f.fig,'Position',f.figpos,'Resize','Off');
+  movegui(f.fig);
   % Adjust x,y of each uicontrol
   if isempty(f.panel)
       c = findobj(f.fig,'type','uicontrol')';
