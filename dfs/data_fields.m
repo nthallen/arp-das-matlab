@@ -22,7 +22,7 @@ classdef data_fields < handle
     % %     txt_padding
     %       title
     %       grid_cols_per_col
-    %       figbgcolor
+    %       Color
     opts
 %     cur_x
 %     min_x
@@ -90,7 +90,7 @@ classdef data_fields < handle
       dfs.opts.btn_fontsize = 12;
       dfs.opts.title = '';
       dfs.opts.grid_cols_per_col = 3;
-      dfs.opts.figbgcolor = [];
+      dfs.opts.Color = [];
 
       dfs.data_conn.n = 0;
       dfs.data_conn.t = [];
@@ -99,15 +99,15 @@ classdef data_fields < handle
 
       dfs.fig = uifigure;
       dfs.fig.Units = 'pixels';
-      if isempty(dfs.opts.figbgcolor)
-        dfs.opts.figbgcolor = get(dfs.fig,'Color');
+      if isempty(dfs.opts.Color)
+        dfs.opts.Color = dfs.fig.Color;
       else
-        dfs.fig.Color = dfs.opts.figbgcolor;
+        dfs.fig.Color = dfs.opts.Color;
       end
 
       dfs.context.level = 1;
       dfs.context.stack = struct('parent',dfs.fig,'tabgroup',[], ...
-        'Row',[],'Column',[]);
+        'Row',[],'Column',[],'layoutready',false);
       dfs.ctx = dfs.context.stack;
 %     dfs.cur_col.n_rows = [];
 %     dfs.cur_col.GridColumn = [];
@@ -139,13 +139,16 @@ classdef data_fields < handle
       end
     end
 
-    function push_context(dfs, parent, tabgroup, Row, Column)
-      if nargin < 5
-        Column = [];
-        if nargin < 4
-          Row = [];
-          if nargin < 3
-            tabgroup = [];
+    function push_context(dfs, parent, tabgroup, Row, Column, layoutready)
+      if nargin < 6
+        layoutready = false;
+        if nargin < 5
+          Column = [];
+          if nargin < 4
+            Row = [];
+            if nargin < 3
+              tabgroup = [];
+            end
           end
         end
       end
@@ -153,6 +156,7 @@ classdef data_fields < handle
       dfs.ctx.tabgroup = tabgroup;
       dfs.ctx.Row = Row;
       dfs.ctx.Column = Column;
+      dfs.ctx.layoutready = layoutready;
       dfs.context.level = dfs.context.level+1;
       dfs.context.stack(dfs.context.level) = dfs.ctx;
     end
@@ -164,7 +168,8 @@ classdef data_fields < handle
     
     function ctx_lvl = rt_init(dfs)
       ctx_lvl = dfs.context.level;
-      gl = uigridlayout(dfs.ctx.parent,[3,1]);
+      gl = uigridlayout(dfs.ctx.parent,[3,1], ...
+        'BackgroundColor', dfs.opts.Color);
       if ~isempty(gl.Layout)
         gl.Layout.Row = dfs.ctx.Row;
         gl.Layout.Column = dfs.ctx.Column;
@@ -175,7 +180,8 @@ classdef data_fields < handle
       ttl.Layout.Row = 1;
       ttl.Layout.Column = 1;
 
-      gl3 = uigridlayout(gl,[1,3]);
+      gl3 = uigridlayout(gl,[1,3], ...
+        'BackgroundColor', dfs.opts.Color);
       gl3.Layout.Row = 3; gl3.Layout.Column = 1;
       h = uibutton(gl3,'Text','Graph Selected'); % , ...
          %  'ButtonPushedFcn',@(~,~)graph_selected(dfs));
@@ -201,40 +207,51 @@ classdef data_fields < handle
           tabgroup.Layout.Column = cntx.Column;
         end
         dfs.push_context(tabgroup,tabgroup);
+      else
+        tabgroup = cntx.tabgroup;
       end
       tab = uitab(tabgroup,'Title',name);
       dfs.push_context(tab);
     end
 
     function end_tab(dfs)
-      dfs.pop_context;
+      while isempty(dfs.ctx.tabgroup)
+        dfs.pop_context;
+      end
     end
 
     function start_col(dfs)
-      % dfs.cur_col.fields = {};
-      % dfs.cur_col.groups = {};
-      % dfs.cur_col.btns = {};
-      % dfs.cur_col.max_lbl_width = 0;
-      % dfs.cur_col.max_txt_width = 0;
-      % dfs.cur_col.max_btn_x = 0;
-      % dfs.cur_y = dfs.max_y - dfs.opts.v_padding;
-      % dfs.cur_x = dfs.cur_x + dfs.opts.col_leading;
       cntx = dfs.ctx;
-      if isempty(cntx.Row) && isempty(cntx.Column)
-        gl = uigridlayout(cntx.parent,[1,1]);
-        gl.UserData.LayoutSet = false;
-        dfs.push_context(gl,[],1,0);
-      elseif ~isempty(cntx.Row) && ~isempty(cntx.Column)
-        gl = uigridlayout(cntx.parent,[1,1]);
-        gl.UserData.LayoutSet = false;
-        gl.Layout.Row = cntx.Row;
-        gl.Layout.Column = cntx.Column;
-        dfs.push_context(gl,[],1,0);
-      else
+      if cntx.layoutready
         dfs.ctx.Row = 1;
         dfs.ctx.Column = cntx.Column + dfs.opts.grid_cols_per_col;
+      else
+        gl = uigridlayout(cntx.parent,[1,1], ...
+          'BackgroundColor', dfs.opts.Color, ...
+          'ColumnSpacing', dfs.opts.h_leading, ...
+          'RowSpacing', dfs.opts.v_leading ...
+          );
+        gl.UserData.LayoutSet = false;
+        dfs.push_context(gl,[],1,0,true);
+        if ~isempty(cntx.Row) && ~isempty(cntx.Column)
+          gl.Layout.Row = cntx.Row;
+          gl.Layout.Column = cntx.Column;
+        end
       end
-      % dfs.cur_col.n_rows = 0;
+%       if isempty(cntx.Row) && isempty(cntx.Column)
+%         gl = uigridlayout(cntx.parent,[1,1]);
+%         gl.UserData.LayoutSet = false;
+%         dfs.push_context(gl,[],1,0);
+%       elseif ~isempty(cntx.Row) && ~isempty(cntx.Column)
+%         gl = uigridlayout(cntx.parent,[1,1]);
+%         gl.UserData.LayoutSet = false;
+%         gl.Layout.Row = cntx.Row;
+%         gl.Layout.Column = cntx.Column;
+%         dfs.push_context(gl,[],1,0);
+%       else
+%         dfs.ctx.Row = 1;
+%         dfs.ctx.Column = cntx.Column + dfs.opts.grid_cols_per_col;
+%       end
     end
     
     function end_col(dfs)
@@ -297,7 +314,7 @@ classdef data_fields < handle
       dfs.plot_defs.(ID) = plt;
       % boxdim = 14; % size of a checkbox
       % boxwid = 20; % width required for checkbox (add to extent)
-      bbg = dfs.opts.figbgcolor;
+      bbg = dfs.opts.Color;
       if ~isempty(plt.opts.label)
         cntx = dfs.ctx;
 %         parent = dfs.fig;
@@ -873,7 +890,8 @@ classdef data_fields < handle
             case 'figure'
               P(1:2) = w.Position(1:2);
           end
-          if w.Type ~= "uitab" && any(w.Position(3:4) ~= P(3:4))
+          if w.Type ~= "uitabgroup" && w.Type ~= "uitab" ...
+              && any(w.Position(3:4) ~= P(3:4))
             w.Position(3:4) = P(3:4);
             resized = true;
             if w.Type == "figure"

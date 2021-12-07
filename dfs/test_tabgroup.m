@@ -13,6 +13,8 @@ array1 = new_gridlayout(gl0, 'One', '1');
 array2 = new_gridlayout(gl0, 'Two', '2');
 tb2 = uitab(tg,'Title','Panel');
 pn2 = uipanel(tb2,'Title','Subgroup');
+%
+resize_widget(fig);
 %%
 Pfig = get_widget_pos(fig);
 Ptg = get_widget_pos(tg);
@@ -179,8 +181,13 @@ function P = get_widget_pos(w)
   % fprintf(1,'Pos of %s is [ %d %d %d %d]\n', tag, P);
 end
 
-function P = resize_widget(w)
-% P = resize_widget(w)
+function [P,resized_out] = resize_widget(w,resized)
+% [P,resized_out] = resize_widget(w,resized)
+% w is the widget
+% resized is a boolean indicating whether any sibling widgets
+% have been resized on this pass.
+% resized_out is set to true if resized was true or w has been resized.
+%
 % Returns the actual extents of the widget in the standard
 % [x y dx dy] format. For uigridlayout (and possibly other containers), we
 % will instead return [NaN NaN dx dy], i.e. only the size. x and y usually
@@ -208,42 +215,57 @@ function P = resize_widget(w)
 %
 %   Our concept is to in fact nest uigridlayouts freely to achieve a
 %   desired layout, so this is a realistic problem.
+  if nargin < 2
+    resized = false;
+  end
   switch w.Type
     case {'uigridlayout'}
-      P = [NaN NaN 0 0];
-      rowY = zeros(length(w.RowHeight)+1,1);
-      rowheight = zeros(length(w.RowHeight)+1,1);
-      rowY(end) = w.RowSpacing;
-      colX = zeros(length(w.ColumnWidth)+1,1);
-      colwidth = zeros(length(w.ColumnWidth)+1,1);
-      colX(1) = w.ColumnSpacing;
-      ch = w.Children;
-      for i=1:length(ch)
-        % indexes into rowY and rowheight are offset by 1, so
-        % rowY(2) is the Y offset of row 1, the top row of the grid.
-        row = ch(i).Layout.Row;
-        row_m = min(row)+1;
-        row_M = max(row)+1;
-        col = ch(i).Layout.Column;
-        col_m = min(col);
-        col_M = max(col);
-        Pi = get_widget_pos(ch(i));
-        % If we have full position, update P directly
-        if ~any(isnan(Pi))
-          P(3:4) = max(P(3:4),Pi(1:2)+Pi(3:4));
-          colX(col_m) = max(colX(col_m),Pi(1));
-          rowY(row_M) = max(rowY(row_M),Pi(2));
+      uigrid_working = true;
+      uigrid_resized = false;
+      while uigrid_working
+        drawnow;
+        drawnow;
+        uigrid_working = false;
+        P = [NaN NaN 0 0];
+        rowY = zeros(length(w.RowHeight)+1,1);
+        rowheight = zeros(length(w.RowHeight)+1,1);
+        rowY(end) = w.RowSpacing;
+        colX = zeros(length(w.ColumnWidth)+1,1);
+        colwidth = zeros(length(w.ColumnWidth)+1,1);
+        colX(1) = w.ColumnSpacing;
+        ch = w.Children;
+        for i=1:length(ch)
+          % indexes into rowY and rowheight are offset by 1, so
+          % rowY(2) is the Y offset of row 1, the top row of the grid.
+          row = ch(i).Layout.Row;
+          row_m = min(row)+1;
+          row_M = max(row)+1;
+          col = ch(i).Layout.Column;
+          col_m = min(col);
+          col_M = max(col);
+          [Pi,uigrid_resized] = resize_widget(ch(i),uigrid_resized);
+          % If we have full position, update P directly
+          if ~any(isnan(Pi))
+            P(3:4) = max(P(3:4),Pi(1:2)+Pi(3:4));
+            colX(col_m) = max(colX(col_m),Pi(1));
+            rowY(row_M) = max(rowY(row_M),Pi(2));
+          end
+          if isscalar(col)
+            colwidth(col) = max(colwidth(col),Pi(3));
+          end
+          colX(col_M+1) = max(colX(col_M+1), ...
+            colX(col_m)+Pi(3)+w.ColumnSpacing);
+          if isscalar(row)
+            rowheight(row_m) = max(rowheight(row_m),Pi(4));
+          end
+          rowY(row_m-1) = max(rowY(row_m-1), ...
+            rowY(row_M)+Pi(4)+w.RowSpacing);
+          if uigrid_resized
+            resized = true;
+          else
+            uigrid_working = false;
+          end
         end
-        if isscalar(col)
-          colwidth(col) = max(colwidth(col),Pi(3));
-        end
-        colX(col_M+1) = max(colX(col_M+1), ...
-          colX(col_m)+Pi(3)+w.ColumnSpacing);
-        if isscalar(row)
-          rowheight(row_m) = max(rowheight(row_m),Pi(4));
-        end
-        rowY(row_m-1) = max(rowY(row_m-1), ...
-          rowY(row_M)+Pi(4)+w.RowSpacing);
       end
       for i=(length(rowY)-1):-1:1
         rowY(i) = max(rowY(i),rowY(i+1)+rowheight(i+1)+w.RowSpacing);
@@ -254,10 +276,10 @@ function P = resize_widget(w)
       end
       P(3) = max(P(3),colX(end));
     case {'uitabgroup','uitab','uipanel','figure'}
-      % max of children
+      % determine size of children
       P = [];
       for i=1:length(w.Children)
-        Pi = get_widget_pos(w.Children(i));
+        [Pi,resized] = resize_widget(w.Children(i),resized);
         if any(isnan(Pi(1:2)))
           assert(w.Children(i).Type == "uigridlayout");
           % uigridlayout fills its parent completely, so
@@ -283,11 +305,24 @@ function P = resize_widget(w)
           end
         end
       end
+      if isempty(P); P = [1 1 0 0]; end
       switch w.Type
         case 'uitabgroup'
-          P(3:4) = P(3:4) + w.Position(3:4) - w.Children(1).Position(3:4);
+          % Correct for tab heading, border
+          if ~isempty(w.Children)
+            P(3:4) = P(3:4) + w.Position(3:4) - w.Children(1).Position(3:4);
+          end
+        case 'uipanel'
+          P(3:4) = P(3:4) + w.OuterPosition(3:4) - w.InnerPosition(3:4);
         case 'figure'
           P(1:2) = w.Position(1:2);
+      end
+      if w.Type ~= "uitab" && any(w.Position(3:4) ~= P(3:4))
+        w.Position(3:4) = P(3:4);
+        resized = true;
+        if w.Type == "figure"
+          movegui(w);
+        end
       end
     otherwise
       try
@@ -302,4 +337,7 @@ function P = resize_widget(w)
     tag = sprintf('Untagged %s',w.Type);
   end
   % fprintf(1,'Pos of %s is [ %d %d %d %d]\n', tag, P);
+  if nargout > 1
+    resized_out = resized;
+  end
 end
