@@ -18,18 +18,10 @@ classdef data_fields < handle
     %       v_leading % space between rows
     %       h_padding % space between edge and outer columns
     %       h_leading % space between label and text and unit
-    % %     col_leading % horizontal space between columns
-    % %     txt_padding
     %       title
     %       grid_cols_per_col
     %       Color
     opts
-%     cur_x
-%     min_x
-%     max_x
-%     cur_y
-%     min_y
-%     max_y
     records % data_records object
 
     % fields are indexed like records, i.e.
@@ -50,20 +42,6 @@ classdef data_fields < handle
     % sensor at a faster rate than the record is reported.
     varinfo
     figbyrec % struct mapping rec_name to graph_figs index
-
-    % cur_col will record fields in the current column
-    % We need to keep this until the column is closed, so we can
-    % adjust the column widths.
-    % cur_col.fields will be a cell array of data_field objects
-    % cur_col.groups will be a cell array of 
-    % cur_col.btns
-    % cur_col.n_rows will be a scalar count of elements in fields
-    % cur_col.max_lbl_width will be the current maximum label width
-    % cur_col.max_txt_width will be the current maximum text width
-    % cur_col.max_btn_x is the rightmost extent of all buttons
-    % replace above with:
-    %   ctx (struct with parent, tab_group, Row, Column)
-    % cur_col
     graph_figs % cell array of data_fig objects
     plot_defs % map plot IDs to data_plot objects
     dfuicontextmenu % uicontextmenu for data_field lables
@@ -73,17 +51,10 @@ classdef data_fields < handle
   end
   methods
     function dfs = data_fields(varargin)
-%     d = get(dfs.fig,'Position');
-%       dfs.min_x = 0;
-%       dfs.max_x = 400;
-%       dfs.min_y = d(4);
-%       dfs.max_y = d(4);
       dfs.opts.v_padding = 10;
       dfs.opts.v_leading = 3;
       dfs.opts.h_padding = 20;
       dfs.opts.h_leading = 5;
-      % dfs.opts.col_leading = 15;
-      % dfs.opts.txt_padding = 5;
       dfs.opts.txt_font = 'Courier New';
       dfs.opts.txt_fontsize = 10;
       dfs.opts.btn_font = 'Arial';
@@ -97,7 +68,7 @@ classdef data_fields < handle
       dfs.data_conn.connected = 0;
       dfs.set_opts(varargin{:});
 
-      dfs.fig = uifigure;
+      dfs.fig = uifigure('WindowStyle','normal','Resize','off');
       dfs.fig.Units = 'pixels';
       if isempty(dfs.opts.Color)
         dfs.opts.Color = dfs.fig.Color;
@@ -109,13 +80,8 @@ classdef data_fields < handle
       dfs.context.stack = struct('parent',dfs.fig,'tabgroup',[], ...
         'Row',[],'Column',[],'layoutready',false);
       dfs.ctx = dfs.context.stack;
-%     dfs.cur_col.n_rows = [];
-%     dfs.cur_col.GridColumn = [];
 
       dfs.n_figs = 0;
-%       dfs.cur_x = dfs.min_x + dfs.opts.h_padding;
-%       dfs.cur_y = dfs.max_y;
-
       dfs.records = data_records(dfs);
       dfs.graph_figs = {};
       dfs.plot_defs = [];
@@ -125,7 +91,7 @@ classdef data_fields < handle
         'Callback', { @data_fields.context_callback, "new_fig"}, ...
         'Interruptible', 'off');
       dfs.connectmenu = [];
-      % dfs.fig.CloseRequestFcn = @dfs.closereq;
+      dfs.fig.CloseRequestFcn = @dfs.closereq;
     end
 
     function set_opts(dfs, varargin)
@@ -140,6 +106,9 @@ classdef data_fields < handle
     end
 
     function push_context(dfs, parent, tabgroup, Row, Column, layoutready)
+      % context defines where new ui objects should be inserted.
+      % data_plot and data_field objects should only be inserted in
+      % layoutready contexts. layoutready is established in start_col().
       if nargin < 6
         layoutready = false;
         if nargin < 5
@@ -161,9 +130,14 @@ classdef data_fields < handle
       dfs.context.stack(dfs.context.level) = dfs.ctx;
     end
 
-    function pop_context(dfs)
-      dfs.context.level = dfs.context.level-1;
-      dfs.ctx = dfs.context.stack(dfs.context.level);
+    function pop_context(dfs, lvl)
+      if nargin < 2
+        lvl = dfs.context.level - 1;
+      end
+      if lvl > 0 &&  lvl < dfs.context.level
+        dfs.context.level = lvl;
+        dfs.ctx = dfs.context.stack(dfs.context.level);
+      end
     end
     
     function ctx_lvl = rt_init(dfs)
@@ -427,37 +401,8 @@ classdef data_fields < handle
       if nargin < 2
         lvl = 1;
       end
-      while dfs.context.level > lvl
-        dfs.pop_context;
-      end
+      dfs.pop_context(lvl);
       dfs.resize_widget(dfs.fig);
-%       h = uicontrol(dfs.fig,'String','Graph Selected', ...
-%           'Callback',@(~,~)graph_selected(dfs));
-% 
-%       e = h.Extent;
-%       dims = ceil(e(3:4)*1.1);
-%       if dims(1) > dfs.max_x
-%         dfs.max_x = dims(1);
-%       end
-%       x = (dfs.max_x - e(3))/2;
-%       y = dfs.min_y - e(4) - 3*dfs.opts.v_padding;
-%       dfs.min_y = y;
-%       h.Position = [x y dims];
-%       dfs.min_y = dfs.min_y-dfs.opts.v_padding;
-% 
-%       pos = dfs.fig.Position;
-%       pos(2) = pos(2) + dfs.min_y;
-%       pos(3) = dfs.max_x;
-%       pos(4) = dfs.max_y - dfs.min_y;
-%       dfs.fig.Position = pos;
-%       dfs.fig.Resize = 'Off';
-%       % set(dfs.fig,'Resize','Off');
-%       c = findobj(dfs.fig,'type','uicontrol')';
-%       for ctrl = c
-%         ctrl.Position(2) = ctrl.Position(2)-dfs.min_y;
-%       end
-%       dfs.max_y = dfs.max_y - dfs.min_y;
-%       dfs.min_y = 0;
     end
     
     function process_record(dfs,rec_name,str)
@@ -681,8 +626,8 @@ classdef data_fields < handle
       end
     end
     
-    % BytesAvFcn(dfs, src, eventdata)
     function BytesAvFcn(dfs,~,~)
+      % BytesAvFcn(dfs, src, eventdata)
       if dfs.data_conn.connected == 0
         return;
       end
@@ -898,7 +843,7 @@ classdef data_fields < handle
               movegui(w);
             end
           end
-        case 'uicontextmenu'
+        case {'uicontextmenu','uimenu'}
           P = [];
         otherwise
           try
