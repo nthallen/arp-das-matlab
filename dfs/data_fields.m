@@ -6,9 +6,11 @@ classdef data_fields < handle
   %
   % This class will keep track of the position of fields on the figure.
   properties
-    fig % The graphics handle of the main figure
-    n_figs
-    figbgcolor
+    fig % The graphics handle of the main uifigure
+    context % ctx stack
+    % ctx (struct with parent, tab_group, Row, Column)
+    ctx % current context
+    n_figs % Number of data_figs
 
     % struct containing various options. These can be modified by passing
     % option, value pairs in to the data_fields constructor:
@@ -16,16 +18,18 @@ classdef data_fields < handle
     %       v_leading % space between rows
     %       h_padding % space between edge and outer columns
     %       h_leading % space between label and text and unit
-    %       col_leading % horizontal space between columns
-    %       txt_padding
+    % %     col_leading % horizontal space between columns
+    % %     txt_padding
     %       title
+    %       grid_cols_per_col
+    %       figbgcolor
     opts
-    cur_x
-    min_x
-    max_x
-    cur_y
-    min_y
-    max_y
+%     cur_x
+%     min_x
+%     max_x
+%     cur_y
+%     min_y
+%     max_y
     records % data_records object
 
     % fields are indexed like records, i.e.
@@ -51,11 +55,15 @@ classdef data_fields < handle
     % We need to keep this until the column is closed, so we can
     % adjust the column widths.
     % cur_col.fields will be a cell array of data_field objects
+    % cur_col.groups will be a cell array of 
+    % cur_col.btns
     % cur_col.n_rows will be a scalar count of elements in fields
     % cur_col.max_lbl_width will be the current maximum label width
     % cur_col.max_txt_width will be the current maximum text width
     % cur_col.max_btn_x is the rightmost extent of all buttons
-    cur_col
+    % replace above with:
+    %   ctx (struct with parent, tab_group, Row, Column)
+    % cur_col
     graph_figs % cell array of data_fig objects
     plot_defs % map plot IDs to data_plot objects
     dfuicontextmenu % uicontextmenu for data_field lables
@@ -65,41 +73,50 @@ classdef data_fields < handle
   end
   methods
     function dfs = data_fields(varargin)
-      dfs.fig = figure;
-      set(dfs.fig,'color',[.8 .8 1]);
-      dfs.n_figs = 0;
-      set(dfs.fig,'units','pixels');
-      d = get(dfs.fig,'Position');
-      dfs.min_x = 0;
-      dfs.max_x = 400;
-      dfs.min_y = d(4);
-      dfs.max_y = d(4);
+%     d = get(dfs.fig,'Position');
+%       dfs.min_x = 0;
+%       dfs.max_x = 400;
+%       dfs.min_y = d(4);
+%       dfs.max_y = d(4);
       dfs.opts.v_padding = 10;
       dfs.opts.v_leading = 3;
       dfs.opts.h_padding = 20;
-      dfs.opts.h_leading = 0;
-      dfs.opts.col_leading = 15;
-      dfs.opts.txt_padding = 5;
+      dfs.opts.h_leading = 5;
+      % dfs.opts.col_leading = 15;
+      % dfs.opts.txt_padding = 5;
       dfs.opts.txt_font = 'Courier New';
       dfs.opts.txt_fontsize = 10;
       dfs.opts.btn_font = 'Arial';
       dfs.opts.btn_fontsize = 12;
       dfs.opts.title = '';
+      dfs.opts.grid_cols_per_col = 3;
+      dfs.opts.figbgcolor = [];
+
       dfs.data_conn.n = 0;
       dfs.data_conn.t = [];
       dfs.data_conn.connected = 0;
-      for i = 1:2:length(varargin)
-        fld = varargin{i};
-        if isfield(dfs.opts, fld)
-          dfs.opts.(fld) = varargin{i+1};
-        else
-          error('MATLAB:LE:badopt', 'Invalid option: "%s"', fld);
-        end
+      dfs.set_opts(varargin{:});
+
+      dfs.fig = uifigure;
+      dfs.fig.Units = 'pixels';
+      if isempty(dfs.opts.figbgcolor)
+        dfs.opts.figbgcolor = get(dfs.fig,'Color');
+      else
+        dfs.fig.Color = dfs.opts.figbgcolor;
       end
-      dfs.cur_x = dfs.min_x + dfs.opts.h_padding;
-      dfs.cur_y = dfs.max_y;
+
+      dfs.context.level = 1;
+      dfs.context.stack = struct('parent',dfs.fig,'tabgroup',[], ...
+        'Row',[],'Column',[]);
+      dfs.ctx = dfs.context.stack;
+%     dfs.cur_col.n_rows = [];
+%     dfs.cur_col.GridColumn = [];
+
+      dfs.n_figs = 0;
+%       dfs.cur_x = dfs.min_x + dfs.opts.h_padding;
+%       dfs.cur_y = dfs.max_y;
+
       dfs.records = data_records(dfs);
-      dfs.figbgcolor = get(dfs.fig,'Color');
       dfs.graph_figs = {};
       dfs.plot_defs = [];
       dfs.dfuicontextmenu = uicontextmenu(dfs.fig);
@@ -108,52 +125,120 @@ classdef data_fields < handle
         'Callback', { @data_fields.context_callback, "new_fig"}, ...
         'Interruptible', 'off');
       dfs.connectmenu = [];
-      set(dfs.fig,'CloseRequestFcn', @dfs.closereq);
+      % dfs.fig.CloseRequestFcn = @dfs.closereq;
+    end
+
+    function set_opts(dfs, varargin)
+      for i = 1:2:length(varargin)
+        fld = varargin{i};
+        if isfield(dfs.opts, fld)
+          dfs.opts.(fld) = varargin{i+1};
+        else
+          error('MATLAB:LE:badopt', 'Invalid option: "%s"', fld);
+        end
+      end
+    end
+
+    function push_context(dfs, parent, tabgroup, Row, Column)
+      if nargin < 5
+        Column = [];
+        if nargin < 4
+          Row = [];
+          if nargin < 3
+            tabgroup = [];
+          end
+        end
+      end
+      dfs.ctx.parent = parent;
+      dfs.ctx.tabgroup = tabgroup;
+      dfs.ctx.Row = Row;
+      dfs.ctx.Column = Column;
+      dfs.context.level = dfs.context.level+1;
+      dfs.context.stack(dfs.context.level) = dfs.ctx;
+    end
+
+    function pop_context(dfs)
+      dfs.context.level = dfs.context.level-1;
+      dfs.ctx = dfs.context.stack(dfs.context.level);
     end
     
+    function ctx_lvl = rt_init(dfs)
+      ctx_lvl = dfs.context.level;
+      gl = uigridlayout(dfs.ctx.parent,[3,1]);
+      if ~isempty(gl.Layout)
+        gl.Layout.Row = dfs.ctx.Row;
+        gl.Layout.Column = dfs.ctx.Column;
+      end
+      ttl = uilabel(gl,'Text',dfs.opts.title, ...
+        'HorizontalAlignment','center', ...
+        'FontWeight','bold');
+      ttl.Layout.Row = 1;
+      ttl.Layout.Column = 1;
+
+      gl3 = uigridlayout(gl,[1,3]);
+      gl3.Layout.Row = 3; gl3.Layout.Column = 1;
+      h = uibutton(gl3,'Text','Graph Selected'); % , ...
+         %  'ButtonPushedFcn',@(~,~)graph_selected(dfs));
+      h.Layout.Row = 1; h.Layout.Column = 2;
+      gl3.RowHeight{1} = 'fit';
+      gl3.ColumnWidth{1} = '1x';
+      gl3.ColumnWidth{2} = 'fit';
+      gl3.ColumnWidth{3} = '1x';
+      gl3.UserData.LayoutSet = true;
+      for i=1:3; gl.RowHeight{i} = 'fit'; end
+      gl.ColumnWidth{1} = 'fit';
+      gl.UserData.LayoutSet = true;
+
+      dfs.push_context(gl,[], 2,1);
+    end
+
+    function start_tab(dfs,name)
+      cntx = dfs.ctx;
+      if isempty(cntx.tabgroup)
+        tabgroup = uitabgroup(cntx.parent);
+        if ~isempty(tabgroup.Layout)
+          tabgroup.Layout.Row = cntx.Row;
+          tabgroup.Layout.Column = cntx.Column;
+        end
+        dfs.push_context(tabgroup,tabgroup);
+      end
+      tab = uitab(tabgroup,'Title',name);
+      dfs.push_context(tab);
+    end
+
+    function end_tab(dfs)
+      dfs.pop_context;
+    end
+
     function start_col(dfs)
-      dfs.cur_col.fields = {};
-      dfs.cur_col.groups = {};
-      dfs.cur_col.btns = {};
-      dfs.cur_col.n_rows = 0;
-      dfs.cur_col.max_lbl_width = 0;
-      dfs.cur_col.max_txt_width = 0;
-      dfs.cur_col.max_btn_x = 0;
-      dfs.cur_y = dfs.max_y - dfs.opts.v_padding;
+      % dfs.cur_col.fields = {};
+      % dfs.cur_col.groups = {};
+      % dfs.cur_col.btns = {};
+      % dfs.cur_col.max_lbl_width = 0;
+      % dfs.cur_col.max_txt_width = 0;
+      % dfs.cur_col.max_btn_x = 0;
+      % dfs.cur_y = dfs.max_y - dfs.opts.v_padding;
       % dfs.cur_x = dfs.cur_x + dfs.opts.col_leading;
+      cntx = dfs.ctx;
+      if isempty(cntx.Row) && isempty(cntx.Column)
+        gl = uigridlayout(cntx.parent,[1,1]);
+        gl.UserData.LayoutSet = false;
+        dfs.push_context(gl,[],1,0);
+      elseif ~isempty(cntx.Row) && ~isempty(cntx.Column)
+        gl = uigridlayout(cntx.parent,[1,1]);
+        gl.UserData.LayoutSet = false;
+        gl.Layout.Row = cntx.Row;
+        gl.Layout.Column = cntx.Column;
+        dfs.push_context(gl,[],1,0);
+      else
+        dfs.ctx.Row = 1;
+        dfs.ctx.Column = cntx.Column + dfs.opts.grid_cols_per_col;
+      end
+      % dfs.cur_col.n_rows = 0;
     end
     
     function end_col(dfs)
-      % reposition txt fields according to max widths
-      % txt fields are all right-justified
-      %  cur_x is the left of the lbl field
-      %  cur_x + max_lbl_width is the right edge of the lbl col
-      %  cur_x + max_lbl_width + h_padding is left edge of txt col
-      r_edge = dfs.cur_x + dfs.cur_col.max_lbl_width + ...
-        dfs.opts.h_leading + dfs.cur_col.max_txt_width;
-      for i=1:length(dfs.cur_col.fields)
-        fld = dfs.cur_col.fields{i};
-        pos = fld.txt.Position;
-        pos(1) = r_edge - pos(3);
-        fld.txt.Position = pos;
-      end
-      for i=1:length(dfs.cur_col.btns)
-        btn = dfs.cur_col.btns{i};
-        w = dfs.cur_col.max_btn_x - btn.Position(1);
-        btn.Position(3) = w;
-      end
-      if dfs.cur_col.max_btn_x > r_edge
-        r_edge = dfs.cur_col.max_btn_x;
-      end
-      % update cur_x to the right edge of righthand fields
-      % plus col_leading, so left of new column
-      dfs.cur_x = r_edge + dfs.opts.col_leading;
-      if dfs.cur_x > dfs.max_x
-        dfs.max_x = dfs.cur_x;
-      end
-      dfs.cur_col.fields = {};
-      dfs.cur_col.groups = {};
-      dfs.cur_col.plots = {};
+      dfs.ctx.Row = [];
     end
 
     function rec_name_out = check_recname(dfs, var_name, rec_name)
@@ -184,70 +269,93 @@ classdef data_fields < handle
       end
       df_int = data_field(dfs, var_name, fmt, signed);
       dfs.fields.(rec_name).vars.(var_name){end+1} = df_int;
-      dfs.cur_col.fields{end+1} = df_int;
-      dfs.cur_col.n_rows = dfs.cur_col.n_rows+1;
-      if df_int.lbl_width > dfs.cur_col.max_lbl_width
-        dfs.cur_col.max_lbl_width = df_int.lbl_width;
-      end
-      df_int.txt_width = df_int.txt_width + dfs.opts.txt_padding;
-      if df_int.txt_width > dfs.cur_col.max_txt_width
-        dfs.cur_col.max_txt_width = df_int.txt_width;
-      end
-      dfs.cur_y = dfs.cur_y - df_int.fld_height;
-      df_int.lbl.Position = ...
-        [ dfs.cur_x, dfs.cur_y, df_int.lbl_width, df_int.fld_height];
-      df_int.txt.Position = ...
-        [ dfs.cur_x + df_int.lbl_width + dfs.opts.h_leading, dfs.cur_y, ...
-        df_int.txt_width, ...
-        df_int.fld_height];
-      dfs.cur_y = dfs.cur_y - dfs.opts.v_leading;
-      if dfs.cur_y < dfs.min_y
-        dfs.min_y = dfs.cur_y;
-      end
+      % dfs.cur_col.fields{end+1} = df_int;
+      % dfs.cur_col.n_rows = dfs.cur_col.n_rows+1;
+      % if df_int.lbl_width > dfs.cur_col.max_lbl_width
+      %   dfs.cur_col.max_lbl_width = df_int.lbl_width;
+      % end
+      % df_int.txt_width = df_int.txt_width + dfs.opts.txt_padding;
+      % if df_int.txt_width > dfs.cur_col.max_txt_width
+      %   dfs.cur_col.max_txt_width = df_int.txt_width;
+      % end
+      % dfs.cur_y = dfs.cur_y - df_int.fld_height;
+      % df_int.lbl.Position = ...
+      %   [ dfs.cur_x, dfs.cur_y, df_int.lbl_width, df_int.fld_height];
+      % df_int.txt.Position = ...
+      %   [ dfs.cur_x + df_int.lbl_width + dfs.opts.h_leading, dfs.cur_y, ...
+      %   df_int.txt_width, ...
+      %   df_int.fld_height];
+      % dfs.cur_y = dfs.cur_y - dfs.opts.v_leading;
+      % if dfs.cur_y < dfs.min_y
+      %   dfs.min_y = dfs.cur_y;
+      % end
       if nargout > 0; df = df_int; end
     end
 
     function data_plot(dfs,ID,varargin)
       plt = data_plot(ID,varargin{:});
       dfs.plot_defs.(ID) = plt;
-      boxdim = 14; % size of a checkbox
-      boxwid = 20; % width required for checkbox (add to extent)
-      bbg = dfs.figbgcolor;
+      % boxdim = 14; % size of a checkbox
+      % boxwid = 20; % width required for checkbox (add to extent)
+      bbg = dfs.opts.figbgcolor;
       if ~isempty(plt.opts.label)
-        parent = dfs.fig;
-        x = dfs.cur_x;
-        box_x = x;
-        if ~plt.isgroup
-          x = x + boxwid;
-        end
+        cntx = dfs.ctx;
+%         parent = dfs.fig;
+%         x = dfs.cur_x;
+%         box_x = x;
+%         if ~plt.isgroup
+%           x = x + boxwid;
+%         end
         % make a pushbutton to invoke the group or plot
         callback = @(~,~)show_plot(dfs,ID);
-        h = uicontrol(parent, 'Style', 'PushButton', ...
-          'String', plt.opts.label, ...
-          'Callback', callback, 'HorizontalAlignment', 'left', ...
-          'FontName', dfs.opts.btn_font, ...
-          'FontSize', dfs.opts.btn_fontsize, ...
-          'BackgroundColor', bbg );
-        e = get(h,'Extent');
-        dims = e(3:4) + [dfs.opts.h_padding dfs.opts.v_padding];
-        dfs.cur_y = dfs.cur_y - dims(2);
-        set(h,'Position',[x dfs.cur_y dims]);
-        dfs.cur_col.btns{end+1} = h;
+        h = uibutton(cntx.parent, 'Text', plt.opts.label); %, ...
+%           'ButtonPushedFcn', callback);
+%           'HorizontalAlignment', 'left', ...
+%           'FontName', dfs.opts.btn_font, ...
+%           'FontSize', dfs.opts.btn_fontsize, ...
+%           'BackgroundColor', bbg);
+        h.Layout.Row = cntx.Row;
+        gcpc = dfs.opts.grid_cols_per_col;
+        if plt.isgroup
+          h.Layout.Column = cntx.Column + [1,gcpc];
+        else
+          if gcpc > 2
+            pcol = [2,gcpc];
+          else
+            pcol = 2;
+          end
+          h.Layout.Column = cntx.Column + pcol;
+          cb = uicheckbox(cntx.parent, 'Text', '', 'Tag', ID, 'Value', 0);
+          cb.Layout.Row = cntx.Row;
+          cb.Layout.Column = cntx.Column + 1;
+        end
+        dfs.ctx.Row = dfs.ctx.Row + 1;
+%         h = uicontrol(parent, 'Style', 'PushButton', ...
+%           'String', plt.opts.label, ...
+%           'Callback', callback, 'HorizontalAlignment', 'left', ...
+%           'FontName', dfs.opts.btn_font, ...
+%           'FontSize', dfs.opts.btn_fontsize, ...
+%           'BackgroundColor', bbg );
+%         e = get(h,'Extent');
+%         dims = e(3:4) + [dfs.opts.h_padding dfs.opts.v_padding];
+%         dfs.cur_y = dfs.cur_y - dims(2);
+%         set(h,'Position',[x dfs.cur_y dims]);
+%         dfs.cur_col.btns{end+1} = h;
 
-        if ~plt.isgroup
-          box_y = dfs.cur_y + (dims(2)-boxdim)/2;
-          uicontrol(parent,'Style','Checkbox','Tag',ID, ...
-            'Position', [ box_x box_y boxdim boxdim ], ...
-            'Value', 0, 'Max', 1 );
-        end
-        x = x + dims(1);
-        if x > dfs.cur_col.max_btn_x
-          dfs.cur_col.max_btn_x = x;
-        end
-        dfs.cur_y = dfs.cur_y - dfs.opts.v_leading;
-        if dfs.cur_y < dfs.min_y
-          dfs.min_y = dfs.cur_y;
-        end
+%         if ~plt.isgroup
+%           box_y = dfs.cur_y + (dims(2)-boxdim)/2;
+%           uicontrol(parent,'Style','Checkbox','Tag',ID, ...
+%             'Position', [ box_x box_y boxdim boxdim ], ...
+%             'Value', 0, 'Max', 1 );
+%         end
+%         x = x + dims(1);
+%         if x > dfs.cur_col.max_btn_x
+%           dfs.cur_col.max_btn_x = x;
+%         end
+%         dfs.cur_y = dfs.cur_y - dfs.opts.v_leading;
+%         if dfs.cur_y < dfs.min_y
+%           dfs.min_y = dfs.cur_y;
+%         end
       end
     end
 
@@ -289,7 +397,7 @@ classdef data_fields < handle
 
     function graph_selected(dfs)
       % fprintf(1,'graph_selected()\n');
-      h = findobj(dfs.fig,'style','checkbox','value', 1);
+      h = findobj(dfs.fig,'Type','uicheckbox','value', 1);
       plots = {h.Tag};
       if isempty(plots); return; end
       fignum = dfs.show_plot(plots{1});
@@ -298,34 +406,41 @@ classdef data_fields < handle
       end
     end
 
-    function resize(dfs)
-      h = uicontrol(dfs.fig,'String','Graph Selected', ...
-          'Callback',@(~,~)graph_selected(dfs));
-
-      e = h.Extent;
-      dims = ceil(e(3:4)*1.1);
-      if dims(1) > dfs.max_x
-        dfs.max_x = dims(1);
+    function resize(dfs, lvl)
+      if nargin < 2
+        lvl = 1;
       end
-      x = (dfs.max_x - e(3))/2;
-      y = dfs.min_y - e(4) - 3*dfs.opts.v_padding;
-      dfs.min_y = y;
-      h.Position = [x y dims];
-      dfs.min_y = dfs.min_y-dfs.opts.v_padding;
-
-      pos = dfs.fig.Position;
-      pos(2) = pos(2) + dfs.min_y;
-      pos(3) = dfs.max_x;
-      pos(4) = dfs.max_y - dfs.min_y;
-      dfs.fig.Position = pos;
-      dfs.fig.Resize = 'Off';
-      % set(dfs.fig,'Resize','Off');
-      c = findobj(dfs.fig,'type','uicontrol')';
-      for ctrl = c
-        ctrl.Position(2) = ctrl.Position(2)-dfs.min_y;
+      while dfs.context.level > lvl
+        dfs.pop_context;
       end
-      dfs.max_y = dfs.max_y - dfs.min_y;
-      dfs.min_y = 0;
+      dfs.resize_widget(dfs.fig);
+%       h = uicontrol(dfs.fig,'String','Graph Selected', ...
+%           'Callback',@(~,~)graph_selected(dfs));
+% 
+%       e = h.Extent;
+%       dims = ceil(e(3:4)*1.1);
+%       if dims(1) > dfs.max_x
+%         dfs.max_x = dims(1);
+%       end
+%       x = (dfs.max_x - e(3))/2;
+%       y = dfs.min_y - e(4) - 3*dfs.opts.v_padding;
+%       dfs.min_y = y;
+%       h.Position = [x y dims];
+%       dfs.min_y = dfs.min_y-dfs.opts.v_padding;
+% 
+%       pos = dfs.fig.Position;
+%       pos(2) = pos(2) + dfs.min_y;
+%       pos(3) = dfs.max_x;
+%       pos(4) = dfs.max_y - dfs.min_y;
+%       dfs.fig.Position = pos;
+%       dfs.fig.Resize = 'Off';
+%       % set(dfs.fig,'Resize','Off');
+%       c = findobj(dfs.fig,'type','uicontrol')';
+%       for ctrl = c
+%         ctrl.Position(2) = ctrl.Position(2)-dfs.min_y;
+%       end
+%       dfs.max_y = dfs.max_y - dfs.min_y;
+%       dfs.min_y = 0;
     end
     
     function process_record(dfs,rec_name,str)
@@ -613,6 +728,176 @@ classdef data_fields < handle
       var_name = df.var_name;
       dfs = df.flds;
       dfs.new_graph(var_name, mode, fignum, axisnum);
+    end
+
+    function [P,resized_out] = resize_widget(w,resized)
+      % [P,resized_out] = resize_widget(w,resized)
+      % w is the widget
+      % resized is a boolean indicating whether any sibling widgets
+      % have been resized on this pass.
+      % resized_out is set to true if resized was true or w has been resized.
+      %
+      % Returns the actual extents of the widget in the standard
+      % [x y dx dy] format. For uigridlayout (and possibly other containers), we
+      % will instead return [NaN NaN dx dy], i.e. only the size. x and y usually
+      % represent the offset of a widget within the enclosing container, but for
+      % uigridlayout widgets, we do not get that information, and may have to
+      % construct it by other means.
+      %
+      % For simple containers, it will be the max extent of
+      % all the contained widgets. Some container widgets however do not
+      % support Position, or the Position may be unrelated to the included
+      % widgets, so special care is needed.
+      %
+      % uigridlayout:
+      %   The Position of widgets inside a uigridlayout are relative to
+      %   the uigridlayout. The max extent of these is a lower bound for
+      %   the max extent of the uigridlayout.
+      %
+      %   If another uigridlayout is nested inside, the max extent of doubly
+      %   nested widgets will be the max extent within the nested uigridlayout,
+      %   so will be <= the widgets max extent within the outer uigridlayout. If
+      %   we know the grid row and/or column Position based on other widgets in
+      %   adjacent rows or columns, then we can determine the max extent. If not,
+      %   we should be able to determine the row/column Position by adding up the
+      %   the max extents of other cells and row/column spacing.
+      %
+      %   Our concept is to in fact nest uigridlayouts freely to achieve a
+      %   desired layout, so this is a realistic problem.
+      if nargin < 2
+        resized = false;
+      end
+      switch w.Type
+        case {'uigridlayout'}
+          uigrid_working = true;
+          uigrid_resized = false;
+          if ~isfield(w.UserData,'LayoutSet') || ~w.UserData.LayoutSet
+            for i=1:length(w.RowHeight); w.RowHeight{i} = 'fit'; end
+            for i=1:length(w.ColumnWidth); w.ColumnWidth{i} = 'fit'; end
+            w.UserData.LayoutSet = true;
+          end
+          while uigrid_working
+            drawnow;
+            drawnow;
+            uigrid_working = false;
+            P = [NaN NaN 0 0];
+            rowY = zeros(length(w.RowHeight)+1,1);
+            rowheight = zeros(length(w.RowHeight)+1,1);
+            rowY(end) = w.RowSpacing;
+            colX = zeros(length(w.ColumnWidth)+1,1);
+            colwidth = zeros(length(w.ColumnWidth)+1,1);
+            colX(1) = w.ColumnSpacing;
+            ch = w.Children;
+            for i=1:length(ch)
+              % indexes into rowY and rowheight are offset by 1, so
+              % rowY(2) is the Y offset of row 1, the top row of the grid.
+              row = ch(i).Layout.Row;
+              row_m = min(row)+1;
+              row_M = max(row)+1;
+              col = ch(i).Layout.Column;
+              col_m = min(col);
+              col_M = max(col);
+              [Pi,uigrid_resized] = ...
+                data_fields.resize_widget(ch(i),uigrid_resized);
+              % If we have full position, update P directly
+              if ~any(isnan(Pi))
+                P(3:4) = max(P(3:4),Pi(1:2)+Pi(3:4));
+                colX(col_m) = max(colX(col_m),Pi(1));
+                rowY(row_M) = max(rowY(row_M),Pi(2));
+              end
+              if isscalar(col)
+                colwidth(col) = max(colwidth(col),Pi(3));
+              end
+              colX(col_M+1) = max(colX(col_M+1), ...
+                colX(col_m)+Pi(3)+w.ColumnSpacing);
+              if isscalar(row)
+                rowheight(row_m) = max(rowheight(row_m),Pi(4));
+              end
+              rowY(row_m-1) = max(rowY(row_m-1), ...
+                rowY(row_M)+Pi(4)+w.RowSpacing);
+              if uigrid_resized
+                resized = true;
+              else
+                uigrid_working = false;
+              end
+            end
+          end
+          for i=(length(rowY)-1):-1:1
+            rowY(i) = max(rowY(i),rowY(i+1)+rowheight(i+1)+w.RowSpacing);
+          end
+          P(4) = max(P(4),rowY(1));
+          for i=2:length(colX)
+            colX(i) = max(colX(i),colX(i-1)+colwidth(i-1)+w.ColumnSpacing);
+          end
+          P(3) = max(P(3),colX(end));
+        case {'uitabgroup','uitab','uipanel','figure'}
+          % determine size of children
+          P = [];
+          for i=1:length(w.Children)
+            [Pi,resized] = data_fields.resize_widget(w.Children(i),resized);
+            if isempty(Pi); continue; end
+            if any(isnan(Pi(1:2)))
+              assert(w.Children(i).Type == "uigridlayout");
+              % uigridlayout fills its parent completely, so
+              % position relative to parent is [1 1].
+              Pi(1:2) = [1 1];
+            end
+            if isempty(P)
+              P = Pi;
+            else
+              if Pi(1) < P(1)
+                P(3) = P(3) + P(1) - Pi(1);
+              end
+              if Pi(2) < P(2)
+                P(4) = P(4) + P(2) - Pi(2);
+              end
+              Pe = P(1:2)+P(3:4);
+              Pie = Pi(1:2)+Pi(3:4);
+              if Pie(1) > Pe(1)
+                P(3) = Pie(1)-P(1);
+              end
+              if Pie(2) > Pe(2)
+                P(4) = Pie(2) - P(2);
+              end
+            end
+          end
+          if isempty(P); P = [1 1 0 0]; end
+          switch w.Type
+            case 'uitabgroup'
+              % Correct for tab heading, border
+              if ~isempty(w.Children)
+                P(3:4) = P(3:4) + w.Position(3:4) - w.Children(1).Position(3:4);
+              end
+            case 'uipanel'
+              P(3:4) = P(3:4) + w.OuterPosition(3:4) - w.InnerPosition(3:4);
+            case 'figure'
+              P(1:2) = w.Position(1:2);
+          end
+          if w.Type ~= "uitab" && any(w.Position(3:4) ~= P(3:4))
+            w.Position(3:4) = P(3:4);
+            resized = true;
+            if w.Type == "figure"
+              movegui(w);
+            end
+          end
+        case 'uicontextmenu'
+          P = [];
+        otherwise
+          try
+            P = w.Position;
+          catch
+            fprintf(1,'Could not read Position of type %s\n',w.Type);
+            P = [0 0 0 0];
+          end
+      end
+%       tag = w.Tag;
+%       if isempty(tag)
+%         tag = sprintf('Untagged %s',w.Type);
+%       end
+      % fprintf(1,'Pos of %s is [ %d %d %d %d]\n', tag, P);
+      if nargout > 1
+        resized_out = resized;
+      end
     end
   end
 end
