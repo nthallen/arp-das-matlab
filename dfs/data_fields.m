@@ -189,6 +189,8 @@ classdef data_fields < handle
     end
 
     function end_tab(dfs)
+      % dfs.end_tab
+      % Pops the context until at the tabgroup level
       while isempty(dfs.ctx.tabgroup)
         dfs.pop_context;
       end
@@ -212,23 +214,12 @@ classdef data_fields < handle
           gl.Layout.Column = cntx.Column;
         end
       end
-%       if isempty(cntx.Row) && isempty(cntx.Column)
-%         gl = uigridlayout(cntx.parent,[1,1]);
-%         gl.UserData.LayoutSet = false;
-%         dfs.push_context(gl,[],1,0);
-%       elseif ~isempty(cntx.Row) && ~isempty(cntx.Column)
-%         gl = uigridlayout(cntx.parent,[1,1]);
-%         gl.UserData.LayoutSet = false;
-%         gl.Layout.Row = cntx.Row;
-%         gl.Layout.Column = cntx.Column;
-%         dfs.push_context(gl,[],1,0);
-%       else
-%         dfs.ctx.Row = 1;
-%         dfs.ctx.Column = cntx.Column + dfs.opts.grid_cols_per_col;
-%       end
     end
     
     function end_col(dfs)
+      % dfs.end_col
+      % Clears the current context Row to indicate we are outside any
+      % column.
       dfs.ctx.Row = [];
     end
 
@@ -244,21 +235,19 @@ classdef data_fields < handle
       end
     end
 
-    function df = field(dfs, var_name, fmt, signed)
-      % df = dfs.field(var_name, fmt, signed)
-      % rec_name is a sanity check for the moment, then will be eliminated
+    function df = field(dfs, var_name, fmt, varargin)
+      % df = dfs.field(var_name, fmt, ...)
       % var_name is the variable name
       % fmt is printf format string for the display
-      % signed is a boolean, defaults to false
-      if nargin < 5
-        signed = false;
-      end
+      % option/value pairs can follow for:
+      %  label: default is var_name
+      %  units: no default
       rec_name = dfs.check_recname(var_name);
       if ~isfield(dfs.fields, rec_name) || ...
           ~isfield(dfs.fields.(rec_name).vars,var_name)
         dfs.fields.(rec_name).vars.(var_name) = {};
       end
-      df_int = data_field(dfs, var_name, fmt, signed);
+      df_int = data_field(dfs, var_name, fmt, varargin{:});
       dfs.fields.(rec_name).vars.(var_name){end+1} = df_int;
       % dfs.cur_col.fields{end+1} = df_int;
       % dfs.cur_col.n_rows = dfs.cur_col.n_rows+1;
