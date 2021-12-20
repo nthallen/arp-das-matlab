@@ -8,6 +8,13 @@ classdef data_plot < handle
     % struct containing options. This is done to simplify
     % handling the input arguments
     %   vars: cell array of var_names
+    %     update: array of graphline structs
+    %       name: name of the graphline
+    %       var_name: name (same as name except for 'bit')
+    %       type: 'bit', 'analog'
+    %       bit_num: int
+    %       line
+    %       
     %   plots: cell array of plot IDs
     %   linestyle: ultimately
     %   label: if defined, will produce a menu label

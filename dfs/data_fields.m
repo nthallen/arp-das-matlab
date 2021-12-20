@@ -242,58 +242,23 @@ classdef data_fields < handle
       % option/value pairs can follow for:
       %  label: default is var_name
       %  units: no default
-      rec_name = dfs.check_recname(var_name);
-      if ~isfield(dfs.fields, rec_name) || ...
-          ~isfield(dfs.fields.(rec_name).vars,var_name)
-        dfs.fields.(rec_name).vars.(var_name) = {};
-      end
       df_int = data_field(dfs, var_name, fmt, varargin{:});
-      dfs.fields.(rec_name).vars.(var_name){end+1} = df_int;
-      % dfs.cur_col.fields{end+1} = df_int;
-      % dfs.cur_col.n_rows = dfs.cur_col.n_rows+1;
-      % if df_int.lbl_width > dfs.cur_col.max_lbl_width
-      %   dfs.cur_col.max_lbl_width = df_int.lbl_width;
-      % end
-      % df_int.txt_width = df_int.txt_width + dfs.opts.txt_padding;
-      % if df_int.txt_width > dfs.cur_col.max_txt_width
-      %   dfs.cur_col.max_txt_width = df_int.txt_width;
-      % end
-      % dfs.cur_y = dfs.cur_y - df_int.fld_height;
-      % df_int.lbl.Position = ...
-      %   [ dfs.cur_x, dfs.cur_y, df_int.lbl_width, df_int.fld_height];
-      % df_int.txt.Position = ...
-      %   [ dfs.cur_x + df_int.lbl_width + dfs.opts.h_leading, dfs.cur_y, ...
-      %   df_int.txt_width, ...
-      %   df_int.fld_height];
-      % dfs.cur_y = dfs.cur_y - dfs.opts.v_leading;
-      % if dfs.cur_y < dfs.min_y
-      %   dfs.min_y = dfs.cur_y;
-      % end
+      dfs.ctx.Row = dfs.ctx.Row+1;
       if nargout > 0; df = df_int; end
     end
 
     function data_plot(dfs,ID,varargin)
       plt = data_plot(ID,varargin{:});
       dfs.plot_defs.(ID) = plt;
-      % boxdim = 14; % size of a checkbox
-      % boxwid = 20; % width required for checkbox (add to extent)
-      bbg = dfs.opts.Color;
       if ~isempty(plt.opts.label)
         cntx = dfs.ctx;
-%         parent = dfs.fig;
-%         x = dfs.cur_x;
-%         box_x = x;
-%         if ~plt.isgroup
-%           x = x + boxwid;
-%         end
         % make a pushbutton to invoke the group or plot
         callback = @(~,~)show_plot(dfs,ID);
-        h = uibutton(cntx.parent, 'Text', plt.opts.label); %, ...
-%           'ButtonPushedFcn', callback);
-%           'HorizontalAlignment', 'left', ...
-%           'FontName', dfs.opts.btn_font, ...
-%           'FontSize', dfs.opts.btn_fontsize, ...
-%           'BackgroundColor', bbg);
+        h = uibutton(cntx.parent, 'Text', plt.opts.label, ...
+          'ButtonPushedFcn', callback, ...
+          'HorizontalAlignment', 'left', ...
+          'FontName', dfs.opts.btn_font, ...
+          'FontSize', dfs.opts.btn_fontsize);
         h.Layout.Row = cntx.Row;
         gcpc = dfs.opts.grid_cols_per_col;
         if plt.isgroup
@@ -310,32 +275,6 @@ classdef data_fields < handle
           cb.Layout.Column = cntx.Column + 1;
         end
         dfs.ctx.Row = dfs.ctx.Row + 1;
-%         h = uicontrol(parent, 'Style', 'PushButton', ...
-%           'String', plt.opts.label, ...
-%           'Callback', callback, 'HorizontalAlignment', 'left', ...
-%           'FontName', dfs.opts.btn_font, ...
-%           'FontSize', dfs.opts.btn_fontsize, ...
-%           'BackgroundColor', bbg );
-%         e = get(h,'Extent');
-%         dims = e(3:4) + [dfs.opts.h_padding dfs.opts.v_padding];
-%         dfs.cur_y = dfs.cur_y - dims(2);
-%         set(h,'Position',[x dfs.cur_y dims]);
-%         dfs.cur_col.btns{end+1} = h;
-
-%         if ~plt.isgroup
-%           box_y = dfs.cur_y + (dims(2)-boxdim)/2;
-%           uicontrol(parent,'Style','Checkbox','Tag',ID, ...
-%             'Position', [ box_x box_y boxdim boxdim ], ...
-%             'Value', 0, 'Max', 1 );
-%         end
-%         x = x + dims(1);
-%         if x > dfs.cur_col.max_btn_x
-%           dfs.cur_col.max_btn_x = x;
-%         end
-%         dfs.cur_y = dfs.cur_y - dfs.opts.v_leading;
-%         if dfs.cur_y < dfs.min_y
-%           dfs.min_y = dfs.cur_y;
-%         end
       end
     end
 
@@ -391,6 +330,15 @@ classdef data_fields < handle
         lvl = 1;
       end
       dfs.pop_context(lvl);
+      gls = findobj(dfs.fig,'Type','uigridlayout');
+      for igls=1:length(gls)
+        w = gls(igls);
+        if ~isfield(w.UserData,'LayoutSet') || ~w.UserData.LayoutSet
+          for i=1:length(w.RowHeight); w.RowHeight{i} = 'fit'; end
+          for i=1:length(w.ColumnWidth); w.ColumnWidth{i} = 'fit'; end
+          w.UserData.LayoutSet = true;
+        end
+      end
       dfs.resize_widget(dfs.fig);
     end
     
@@ -467,7 +415,7 @@ classdef data_fields < handle
           if isfield(str,vars{i})
             fs = flds.vars.(vars{i});
             for j = 1:length(fs)
-              set(fs{j}.txt,'String', ...
+              set(fs{j}.txt,'Text', ...
                 fs{j}.txt_convert(str.(vars{i})));
             end
           end
@@ -650,9 +598,9 @@ classdef data_fields < handle
         dfs.disconnect();
       end
       for i = 1:length(dfs.graph_figs)
-        df = dfs.graph_figs{i};
-        if ~isempty(df) && ~isempty(df.fig)
-          close(df.fig);
+        dfig = dfs.graph_figs{i};
+        if ~isempty(dfig) && ~isempty(dfig.fig)
+          close(dfig.fig);
         end
       end
       delete(dfs.fig);
@@ -673,11 +621,12 @@ classdef data_fields < handle
       elseif mode == "new_axes"
         axisnum = 0;
       end
-      lbl = gco;
-      df = get(lbl,'userdata');
+      cbfig = gcbf;
+      field = cbfig.CurrentObject;
+      df = field.UserData;
       % rec_name = df.rec_name;
-      var_name = df.var_name;
-      dfs = df.flds;
+      var_name = df.dl.name;
+      dfs = df.dfs;
       dfs.new_graph(var_name, mode, fignum, axisnum);
     end
 
@@ -722,11 +671,11 @@ classdef data_fields < handle
         case {'uigridlayout'}
           uigrid_working = true;
           uigrid_resized = false;
-          if ~isfield(w.UserData,'LayoutSet') || ~w.UserData.LayoutSet
-            for i=1:length(w.RowHeight); w.RowHeight{i} = 'fit'; end
-            for i=1:length(w.ColumnWidth); w.ColumnWidth{i} = 'fit'; end
-            w.UserData.LayoutSet = true;
-          end
+%           if ~isfield(w.UserData,'LayoutSet') || ~w.UserData.LayoutSet
+%             for i=1:length(w.RowHeight); w.RowHeight{i} = 'fit'; end
+%             for i=1:length(w.ColumnWidth); w.ColumnWidth{i} = 'fit'; end
+%             w.UserData.LayoutSet = true;
+%           end
           while uigrid_working
             drawnow;
             drawnow;
