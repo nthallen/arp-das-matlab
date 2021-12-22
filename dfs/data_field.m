@@ -52,7 +52,7 @@ classdef data_field < handle
         Column = Column+1;
       end
 
-      str = [ '-' df.txt_convert(0)];
+      str = df.dl.txt_invalid;
       df.txt = uilabel(dfs.ctx.parent, ...
         'Text', str, ...
         'HorizontalAlignment', 'right', ...
@@ -66,8 +66,8 @@ classdef data_field < handle
       df.txt.Layout.Column = Column;
       Column = Column+1;
 
-      if ~isempty(df.opts.units)
-        df.units = uilabel(dfs.ctx.parent, 'Text',df.opts.units, ...
+      if ~isempty(df.dl.units)
+        df.units = uilabel(dfs.ctx.parent, 'Text',df.dl.units, ...
           'HorizontalAlignment', 'left', ...
           'BackgroundColor', dfs.opts.Color, ...
           'userdata', df);
@@ -80,14 +80,6 @@ classdef data_field < handle
         dfs.fields.(rec_name).vars.(var_name) = {};
       end
       dfs.fields.(rec_name).vars.(var_name){end+1} = df;
-    end
-    
-    function str = txt_convert(obj, val)
-      if isnumeric(obj.fmt)
-        str = num2str(val,obj.fmt);
-      else
-        str = sprintf(obj.fmt,val);
-      end
     end
   end
 end

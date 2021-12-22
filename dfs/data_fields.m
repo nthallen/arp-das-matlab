@@ -43,6 +43,7 @@ classdef data_fields < handle
     varinfo
     figbyrec % struct mapping rec_name to graph_figs index
     graph_figs % cell array of data_fig objects
+    line_defs % map data_line.name to data_line objects
     plot_defs % map plot IDs to data_plot objects
     dfuicontextmenu % uicontextmenu for data_field lables
     connectmenu % connect menu
@@ -247,8 +248,41 @@ classdef data_fields < handle
       if nargout > 0; df = df_int; end
     end
 
-    function data_plot(dfs,ID,varargin)
-      plt = data_plot(ID,varargin{:});
+    function dl_out = data_line(dfs,varargin)
+      % dl = dfs.data_line(name);
+      % dl = dfs.data_line('name', name ...);
+      % Creates a new data_line object or augments an existing one.
+      % Updates dfs.line_defs to point to the new object
+      if length(varargin)==1 && iscell(varargin{1})
+        varargin = varargin{1};
+      end
+      switch length(varargin)
+        case 0
+          error('dfs.data_line() requires arguments');
+        case 1
+          name = varargin{1};
+          varargin = {'name',name};
+        otherwise
+          if strcmp(varargin{1},'name')
+            name = varargin{2};
+          else
+            error('dfs.data_line() expected ''name'' as first argument');
+          end
+      end
+      if isfield(dfs.line_defs,name)
+        dl = dfs.line_defs.(name);
+        dl.update(varargin{:});
+      else
+        dl = data_line(varargin{:});
+        dfs.line_defs.(name) = dl;
+      end
+      if nargout > 0
+        dl_out = dl;
+      end
+    end
+
+    function plot(dfs,ID,varargin)
+      plt = data_plot(ID,dfs,varargin{:});
       dfs.plot_defs.(ID) = plt;
       if ~isempty(plt.opts.label)
         cntx = dfs.ctx;
@@ -301,15 +335,14 @@ classdef data_fields < handle
           dfs.show_plot(plots{i},fignum);
         end
       else
-        vars = plt.opts.vars;
-        if isempty(vars); return; end
+        if isempty(plt.lines); return; end
         if nargin >= 3
-          [fignum,axnum] = dfs.new_graph(vars{1},'new_axes',fign_in);
+          [fignum,axnum] = dfs.new_graph(plt.lines{1},'new_axes',fign_in);
         else
-          [fignum,axnum] = dfs.new_graph(vars{1},'new_fig');
+          [fignum,axnum] = dfs.new_graph(plt.lines{1},'new_fig');
         end
-        for i = 2:length(vars)
-          dfs.new_graph(vars{i},'cur_axes',fignum,axnum);
+        for i = 2:length(plt.lines)
+          dfs.new_graph(plt.lines{i},'cur_axes',fignum,axnum);
         end
       end
     end
@@ -416,7 +449,7 @@ classdef data_fields < handle
             fs = flds.vars.(vars{i});
             for j = 1:length(fs)
               set(fs{j}.txt,'Text', ...
-                fs{j}.txt_convert(str.(vars{i})));
+                fs{j}.dl.txt_convert(str.(vars{i})));
             end
           end
         end
@@ -463,9 +496,9 @@ classdef data_fields < handle
       dfs.figbyrec = fbr;
     end
     
-    function [fignum, axnum] = new_graph(dfs, var_name, mode, fignum, axisnum)
-      % [fignum, axnum] = dfs.new_graph(var_name, mode, fign, axisnum)
-      % var_name is the variable name
+    function [fignum, axnum] = new_graph(dfs, dl, mode, fignum, axisnum)
+      % [fignum, axnum] = dfs.new_graph(dl, mode, fign, axisnum)
+      % dl is the data_line object
       % mode is one of 'new_fig', 'cur_axes' or 'new_axes'
       % fign is the fignum previously returned by new_graph(...,'new_fig').
       %   Required except for mode 'new_fig'
@@ -483,8 +516,8 @@ classdef data_fields < handle
           axisnum = 0;
         end
       end
-      rec_name = dfs.check_recname(var_name);
-      axisnum = dfig.new_graph(rec_name, var_name, mode, axisnum);
+      rec_name = dfs.check_recname(dl.var_name);
+      axisnum = dfig.new_graph(rec_name, dl, mode, axisnum);
       fignum = dfig.fignum;
       if mode == "new_fig"
         dfs.graph_figs{dfig.fignum} = dfig;

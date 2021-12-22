@@ -26,10 +26,11 @@ classdef data_fig < handle
       set(dfig.fig,'CloseRequestFcn', @dfig.closereq);
     end
     
-    function axnum = new_graph(dfig, rec_name, var_name, mode, axisnum)
-      % axnum = new_graph(df, rec_name, var_name, mode, axisnum)
+    function axnum = new_graph(dfig, rec_name, dl, mode, axisnum)
+      % axnum = new_graph(df, rec_name, dl, mode, axisnum)
       % use the figure's mode to decide where to put it
       % for starters, always create a new axis
+      % @param dl: data_line object
       % @param mode: "new_fig", "new_axes", "cur_axes"
       if isempty(dfig.fig)
         warning('Attempt to add graph to closed data_fig');
@@ -39,7 +40,7 @@ classdef data_fig < handle
         dfig.recs.(rec_name).vars = [];
       end
       if mode == "new_fig" || mode == "new_axes"
-        the_axis = data_axis(dfig, var_name);
+        the_axis = data_axis(dfig, dl.name);
         dfig.axes{end+1} = the_axis;
         if isempty(dfig.axis_vec)
           dfig.axis_vec = dfig.axes{end}.axis;
@@ -53,13 +54,13 @@ classdef data_fig < handle
       else
         the_axis = dfig.axes{axisnum};
       end
-      n = the_axis.add_line(rec_name, var_name);
-      if isfield(dfig.recs.(rec_name).vars, var_name)
-        dfig.recs.(rec_name).vars.(var_name) = [
-          dfig.recs.(rec_name).vars.(var_name)
+      n = the_axis.add_line(rec_name, dl);
+      if isfield(dfig.recs.(rec_name).vars, dl.name)
+        dfig.recs.(rec_name).vars.(dl.name) = [
+          dfig.recs.(rec_name).vars.(dl.name)
           axisnum n ];
       else
-        dfig.recs.(rec_name).vars.(var_name) = ...
+        dfig.recs.(rec_name).vars.(dl.name) = ...
           [ axisnum n ];
       end
       dfig.redraw();
