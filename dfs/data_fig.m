@@ -40,7 +40,7 @@ classdef data_fig < handle
         dfig.recs.(rec_name).vars = [];
       end
       if mode == "new_fig" || mode == "new_axes"
-        the_axis = data_axis(dfig, dl.name);
+        the_axis = data_axis(dfig.dfs, dfig.fig, dl.name);
         dfig.axes{end+1} = the_axis;
         if isempty(dfig.axis_vec)
           dfig.axis_vec = dfig.axes{end}.axis;
@@ -54,7 +54,7 @@ classdef data_fig < handle
       else
         the_axis = dfig.axes{axisnum};
       end
-      n = the_axis.add_line(rec_name, dl);
+      n = the_axis.add_line(dl);
       if isfield(dfig.recs.(rec_name).vars, dl.name)
         dfig.recs.(rec_name).vars.(dl.name) = [
           dfig.recs.(rec_name).vars.(dl.name)
@@ -66,7 +66,7 @@ classdef data_fig < handle
       dfig.redraw();
       axnum = axisnum;
     end
-    
+
     function redraw(dfig)
       % reallocate axes positions
       n_axes = length(dfig.axes);
@@ -86,56 +86,7 @@ classdef data_fig < handle
       end
       linkaxes(dfig.axis_vec,'x');
     end
-    
-    function update(dfig, rec_name)
-      if isempty(dfig.fig)
-        return;
-      end
-      % update data for each line of each graph
-      if isfield(dfig.recs,rec_name) % if we are plotting any data
-        dr = dfig.drs.records.(rec_name);
-        [T,V] = dr.time_vector(200);
-        % go through df.recs.(rec_name).vars
-        if isfield(dfig.recs.(rec_name), 'vars') && ...
-            isstruct(dfig.recs.(rec_name).vars)
-          vars = dfig.recs.(rec_name).vars;
-          var_names = fieldnames(vars);
-          for i=1:length(var_names)
-            var = var_names{i};
-            axn = vars.(var);
-            
-            D = dr.data_vector(var,V);
-            w = size(D,2);
-            % May need to be more careful accessing varinfo here
-            if w == 1 || dfig.dfs.varinfo.(var).interp == 0
-              TI = T - dfig.drs.max_time;
-              DI = D;
-            else % doing time interpolation
-              h = size(D,1)-1;
-              if h > 0
-                I = ((1:h*w)-1)/w+1;
-                TI = interp1(1:h+1,T,I)-dfig.drs.max_time;
-                DI = reshape(D(2:end,:)',[],1);
-              end
-            end
-            for axi=1:size(axn,1)
-              ax = dfig.axis_vec(axn(axi,1));
-              n = axn(axi,2);
-              lns = findobj(ax,'type','line','parent',ax);
-              if n > 0 && n <= length(lns)
-                set(lns(n),'XData',TI,'YData',DI);
-              else
-                % warning('Line %d not in axis', n);
-                % It makes sense that this line is not here when
-                % we are redrawing. Disable the warning, since it is
-                % ugly and not helpful
-              end
-            end
-          end
-        end
-      end
-    end
-    
+
     function closereq(dfig, ~, ~)
       f = dfig.fig;
       dfig.fig = [];

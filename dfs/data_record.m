@@ -36,9 +36,9 @@ classdef data_record < handle
         for i = 1:dr.n_flds
           w = length(str.(flds{i}));
           dr.dfs.varinfo.(flds{i}).w = w;
-          if ~isfield(dr.dfs.varinfo.(flds{i}),'interp')
-            dr.dfs.varinfo.(flds{i}).interp = 1;
-          end
+%           if ~isfield(dr.dfs.varinfo.(flds{i}),'interp')
+%             dr.dfs.varinfo.(flds{i}).interp = 1;
+%           end
           dr.data.(flds{i}) = zeros(dr.min_alloc,w) * NaN;
         end
         if ~isfield(dr.data, dr.time_name)

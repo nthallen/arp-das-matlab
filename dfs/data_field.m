@@ -14,9 +14,9 @@ classdef data_field < handle
     opts
   end
   methods
-    function df = data_field(dfs, var_name, fmt, varargin)
+    function df = data_field(dfs, name, fmt, varargin)
       df.dfs = dfs;
-      df.dl = data_line('name',var_name,'format',fmt,varargin{:});
+      df.dl = data_line('name',name,'format',fmt,varargin{:});
 
 %       df.fmt = fmt;
 %       df.var_name = var_name;
@@ -64,7 +64,7 @@ classdef data_field < handle
         'userdata', df);
       df.txt.Layout.Row = cntx.Row;
       df.txt.Layout.Column = Column;
-      Column = Column+1;
+      % Column = Column+1;
 
       if ~isempty(df.dl.units)
         df.units = uilabel(dfs.ctx.parent, 'Text',df.dl.units, ...
@@ -74,12 +74,12 @@ classdef data_field < handle
         df.units.Layout.Row = cntx.Row;
         df.units.Layout.Column = cntx.Column + 3;
       end
-      rec_name = dfs.check_recname(var_name);
+      rec_name = dfs.check_recname(df.dl.var_name,df.dl.rec_name);
       if ~isfield(dfs.fields, rec_name) || ...
-          ~isfield(dfs.fields.(rec_name).vars,var_name)
-        dfs.fields.(rec_name).vars.(var_name) = {};
+          ~isfield(dfs.fields.(rec_name).vars,df.dl.var_name)
+        dfs.fields.(rec_name).vars.(df.dl.var_name) = {};
       end
-      dfs.fields.(rec_name).vars.(var_name){end+1} = df;
+      dfs.fields.(rec_name).vars.(df.dl.var_name){end+1} = df;
     end
   end
 end

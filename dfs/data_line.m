@@ -2,12 +2,14 @@ classdef data_line < handle
   properties
     name
     var_name
+    rec_name
     format
     label
     units
     bit_mask
     scale
     offset
+    interp % boolean true if time interpolation is used
     discrete % cell array of labels
     ndiscrete % length of discrete array
     line_attrs
@@ -35,12 +37,14 @@ classdef data_line < handle
       % passed on to plot(). These might include LineStyle, Marker, etc.
       dl.name = '';
       dl.var_name = '';
+      dl.rec_name = 'unassociated';
       dl.format = '';
       dl.label = '';
       dl.units = '';
       dl.bit_mask = [];
       dl.scale = [];
       dl.offset = [];
+      dl.interp = true;
       dl.discrete = {};
       dl.line_attrs = {};
       dl.update(varargin{:});
@@ -67,6 +71,8 @@ classdef data_line < handle
             dl.scale = arg;
           case 'offset'
             dl.offset = arg;
+          case 'interp'
+            dl.interp = arg;
           case 'discrete'
             dl.discrete = arg;
           case 'line_attrs'

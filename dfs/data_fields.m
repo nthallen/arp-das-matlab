@@ -25,16 +25,18 @@ classdef data_fields < handle
     records % data_records object
 
     % fields are indexed like records, i.e.
-    % dfs.fields.(rec).vars.(var) will be an array of data_field
+    % dfs.fields.(rec_name).vars.(var_name) will be an array of data_field
     % objects, allowing a variable to appear in more than one
     % location. If a field is created before the variable's record has been
     % identified, it will be placed under
-    % dfs.fields.unassociated.vars.(var)
+    % dfs.fields.unassociated.vars.(var_name)
+    % Note convention that var_name refers to the TM variable name as it
+    % appears in the json record rec_name. The field 'name' may be
+    % different.
     fields
     % struct mapping var_name to struct with details
     %   rec_name: The record containing the variable
     %   w: The variable width for arrays. Defaults to 0 (undefined)
-    %   interp: boolean
     % If a variable reports multiple values in each record, there are two
     % possible interpretations. If interp is false, each value is treated
     % as an independent variable and plotted as multiple lines. If interp
@@ -45,6 +47,10 @@ classdef data_fields < handle
     graph_figs % cell array of data_fig objects
     line_defs % map data_line.name to data_line objects
     plot_defs % map plot IDs to data_plot objects
+
+    axbyrec % map rec_name to array of axes indices
+    axes % cell array of data_axis objects
+
     dfuicontextmenu % uicontextmenu for data_field lables
     connectmenu % connect menu
     gimenu % The 'Graph in:' submenu
@@ -86,6 +92,10 @@ classdef data_fields < handle
       dfs.records = data_records(dfs);
       dfs.graph_figs = {};
       dfs.plot_defs = [];
+
+      dfs.axbyrec.unassociated = [];
+      dfs.axes = {};
+
       dfs.dfuicontextmenu = uicontextmenu(dfs.fig);
       dfs.gimenu = uimenu(dfs.dfuicontextmenu,'Label','Graph in:');
       uimenu(dfs.gimenu,'Label','New figure', ...
@@ -226,11 +236,13 @@ classdef data_fields < handle
 
     function rec_name_out = check_recname(dfs, var_name, rec_name)
       if isfield(dfs.varinfo, var_name)
-        if nargin >= 3 && ~strcmp(rec_name, dfs.varinfo.(var_name).rec_name)
-          warning('Var %s found in rec %s, but field def said %s', ...
-            var_name, dfs.varinfo.(var_name).rec_name, rec_name);
-        end
         rec_name_out = dfs.varinfo.(var_name).rec_name;
+        if nargin >= 3 && ...
+            ~strcmp(rec_name,'unassociated') && ...
+            ~strcmp(rec_name, rec_name_out)
+          warning('Var %s found in rec %s, but field def said %s', ...
+            var_name, rec_name_out, rec_name);
+        end
       else
         rec_name_out = 'unassociated';
       end
@@ -375,6 +387,23 @@ classdef data_fields < handle
       dfs.resize_widget(dfs.fig);
     end
     
+    function record_axis(dfs, da, rec_name)
+      % record the data_axis object and note [one of] the record(s)
+      % it is associated with.
+      if isempty(da.axis_index)
+        dfs.axes{end+1} = da;
+        da.axis_index = length(dfs.axes);
+      elseif ~strcmp(rec_name,'unassociated')
+        dfs.axbyrec = setdiff(dfs.axbyrec, da.axis_index);
+      end
+      if isfield(dfs.axbyrec,rec_name)
+        dfs.axbyrec.(rec_name) = ...
+          unique([dfs.axbyrec.(rec_name) da.axis_index]);
+      else
+        dfs.axbyrec.(rec_name) = da.axis_index;
+      end
+    end
+
     function process_record(dfs,rec_name,str)
       % dfs.process_record(rec_name, str)
       % rec_name is the record name
@@ -410,33 +439,41 @@ classdef data_fields < handle
               end
             end
           end
-          % Now go through figs with unassociated variables
-          if isfield(dfs.figbyrec,'unassociated')
-            reindex = false;
-            figi = dfs.figbyrec.unassociated;
-            for i = 1:length(figi)
-              dfig = dfs.graph_figs{figi(i)};
-              if isfield(dfig.recs,'unassociated')
-                vars = fieldnames(dfig.recs.unassociated.vars);
-                for j = 1:length(vars)
-                  var_name = vars{j};
-                  new_rec_name = dfs.check_recname(var_name);
-                  if ~strcmp(new_rec_name, 'unassociated')
-                    % now move this record from:
-                    %   dfig.recs.unassociated.vars.(var_name) to
-                    %     dfig.recs.(new_rec_name).vars.(var_name)
-                    dfig.recs.(new_rec_name).vars.(var_name) = ...
-                      dfig.recs.unassociated.vars.(var_name);
-                    dfig.recs.unassociated.vars = ...
-                      rmfield(dfig.recs.unassociated.vars, var_name);
-                  end
-                  fprintf(1,'fig(%d) Var %s associated with rec %s\n', ...
-                    i, vars{j}, new_rec_name);
-                  reindex = true;
-                end
+          % Now go through axes with unassociated variables
+          if isfield(dfs.axbyrec,'unassociated')
+            axi_s = dfs.axbyrec.unassociated;
+            for i = axi_s
+              da = dfs.axes{i};
+              if ~isempty(da)
+                da.new_record(rec_name);
               end
             end
-            if reindex; dfs.index_figs; end
+
+%             reindex = false;
+%             figi = dfs.figbyrec.unassociated;
+%             for i = 1:length(figi)
+%               dfig = dfs.graph_figs{figi(i)};
+%               if isfield(dfig.recs,'unassociated')
+%                 vars = fieldnames(dfig.recs.unassociated.vars);
+%                 for j = 1:length(vars)
+%                   var_name = vars{j};
+%                   new_rec_name = dfs.check_recname(var_name);
+%                   if ~strcmp(new_rec_name, 'unassociated')
+%                     % now move this record from:
+%                     %   dfig.recs.unassociated.vars.(var_name) to
+%                     %     dfig.recs.(new_rec_name).vars.(var_name)
+%                     dfig.recs.(new_rec_name).vars.(var_name) = ...
+%                       dfig.recs.unassociated.vars.(var_name);
+%                     dfig.recs.unassociated.vars = ...
+%                       rmfield(dfig.recs.unassociated.vars, var_name);
+%                   end
+%                   fprintf(1,'fig(%d) Var %s associated with rec %s\n', ...
+%                     i, vars{j}, new_rec_name);
+%                   reindex = true;
+%                 end
+%               end
+%             end
+%             if reindex; dfs.index_figs; end
           end
         end
       end
@@ -516,8 +553,8 @@ classdef data_fields < handle
           axisnum = 0;
         end
       end
-      rec_name = dfs.check_recname(dl.var_name);
-      axisnum = dfig.new_graph(rec_name, dl, mode, axisnum);
+      dl.rec_name = dfs.check_recname(dl.var_name, dl.rec_name);
+      axisnum = dfig.new_graph(dl.rec_name, dl, mode, axisnum);
       fignum = dfig.fignum;
       if mode == "new_fig"
         dfs.graph_figs{dfig.fignum} = dfig;
@@ -541,9 +578,9 @@ classdef data_fields < handle
       datum = get(dfs.fig,'userdata');
     end
     
-    function set_interp(dfs, var_name, val)
-      dfs.varinfo.(var_name).interp = val;
-    end
+%     function set_interp(dfs, var_name, val)
+%       dfs.varinfo.(var_name).interp = val;
+%     end
     
     function set_connection(dfs, hostname, port)
       % dfs.set_connection(hostname, port)
