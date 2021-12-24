@@ -89,12 +89,15 @@ classdef data_fig < handle
 
     function closereq(dfig, ~, ~)
       f = dfig.fig;
-      dfig.fig = [];
       dfig.axis_vec = [];
+      for i=1:length(dfig.axes)
+        dfig.axes{i}.deconstruct;
+      end
       dfig.axes = {};
       dfig.recs = [];
       set(dfig.mymenu,'enable','off','visible','off');
       delete(f);
+      dfig.fig = [];
     end
   end
 end

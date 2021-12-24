@@ -394,13 +394,29 @@ classdef data_fields < handle
         dfs.axes{end+1} = da;
         da.axis_index = length(dfs.axes);
       elseif ~strcmp(rec_name,'unassociated')
-        dfs.axbyrec = setdiff(dfs.axbyrec, da.axis_index);
+        dfs.axbyrec.unassociated = ...
+          setdiff(dfs.axbyrec.unassociated, da.axis_index);
       end
       if isfield(dfs.axbyrec,rec_name)
         dfs.axbyrec.(rec_name) = ...
           unique([dfs.axbyrec.(rec_name) da.axis_index]);
       else
         dfs.axbyrec.(rec_name) = da.axis_index;
+      end
+    end
+
+    function dereference_axis(dfs, da)
+      if ~isempty(da.linesbyrec) && ~isempty(da.axis_index)
+        recs = fieldnames(da.linesbyrec);
+        for i=1:length(recs)
+          rec_name = recs{i};
+          if isfield(dfs.axbyrec,rec_name)
+            dfs.axbyrec.(rec_name) = ...
+              setdiff(dfs.axbyrec.(rec_name),da.axis_index);
+          end
+        end
+        dfs.axes{da.axis_index} = [];
+        da.axis_index = [];
       end
     end
 
@@ -492,18 +508,23 @@ classdef data_fields < handle
         end
       end
       % Now go through graph_figs
-      if nargin >= 3
-        if isempty(dfs.figbyrec) || ~isfield(dfs.figbyrec,rec_name)
-          fn = [];
-        else
-          fn = dfs.figbyrec.(rec_name);
+      if isfield(dfs.axbyrec,rec_name)
+        for axn = dfs.axbyrec.(rec_name)
+          dfs.axes{axn}.update(rec_name)
         end
-      else
-        fn = 1:length(dfs.graph_figs);
       end
-      for i=fn
-        dfs.graph_figs{i}.update(rec_name);
-      end
+%       if nargin >= 3
+%         if isempty(dfs.figbyrec) || ~isfield(dfs.figbyrec,rec_name)
+%           fn = [];
+%         else
+%           fn = dfs.figbyrec.(rec_name);
+%         end
+%       else
+%         fn = 1:length(dfs.graph_figs);
+%       end
+%       for i=fn
+%         dfs.graph_figs{i}.update(rec_name);
+%       end
     end
     
     function dfig = new_graph_fig(dfs)
@@ -695,9 +716,9 @@ classdef data_fields < handle
       field = cbfig.CurrentObject;
       df = field.UserData;
       % rec_name = df.rec_name;
-      var_name = df.dl.name;
+      % var_name = df.dl.name;
       dfs = df.dfs;
-      dfs.new_graph(var_name, mode, fignum, axisnum);
+      dfs.new_graph(df.dl, mode, fignum, axisnum);
     end
 
     function [P,resized_out] = resize_widget(w,resized)

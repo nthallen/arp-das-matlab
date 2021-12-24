@@ -28,7 +28,7 @@ classdef data_axis < handle
       % returns the line index
       da.lines{end+1} = dl;
       if isfield(da.linesbyrec,dl.rec_name)
-        da.linebyrec.(dl.rec_name) = ...
+        da.linesbyrec.(dl.rec_name) = ...
           [da.linesbyrec.(dl.rec_name) length(da.lines)];
       else
         da.dfs.record_axis(da, dl.rec_name);
@@ -56,7 +56,7 @@ classdef data_axis < handle
             da.lns{i} = plot(da.axis, nan, nan);
           else
             % fprintf(1,'%d: %s - non-empty plot\n', i, var_name);
-            D = dl.num_convert(dr.data_vector(var_name,V));
+            D = dl.num_convert(dr.data_vector(dl.var_name,V));
             da.lns{i} = plot(da.axis, T-T0, D);
           end
         else
@@ -136,6 +136,11 @@ classdef data_axis < handle
           end
         end
       end
+    end
+
+    function deconstruct(da)
+      da.dfs.dereference_axis(da);
+      delete(da.axis);
     end
 
   end
