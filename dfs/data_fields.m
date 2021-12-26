@@ -168,8 +168,8 @@ classdef data_fields < handle
       gl3 = uigridlayout(gl,[1,3], ...
         'BackgroundColor', dfs.opts.Color);
       gl3.Layout.Row = 3; gl3.Layout.Column = 1;
-      h = uibutton(gl3,'Text','Graph Selected'); % , ...
-         %  'ButtonPushedFcn',@(~,~)graph_selected(dfs));
+      h = uibutton(gl3,'Text','Graph Selected', ...
+           'ButtonPushedFcn',@(~,~)graph_selected(dfs));
       h.Layout.Row = 1; h.Layout.Column = 2;
       gl3.RowHeight{1} = 'fit';
       gl3.ColumnWidth{1} = '1x';
