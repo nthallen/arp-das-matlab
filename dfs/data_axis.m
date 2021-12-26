@@ -39,36 +39,13 @@ classdef data_axis < handle
     end
     
     function redraw(da)
-      cla(da.axis);
-      % fprintf(1,'redraw()\n');
-      for i=1:length(da.lines)
-        rec_name = da.lines{i}.rec_name;
-        dl = da.lines{i};
-        if isfield(da.dfs.records.records, rec_name)
-          dr = da.dfs.records.records.(rec_name);
-          [T,V] = dr.time_vector(200);
-          T0 = da.dfs.records.max_time;
-          if isempty(T) || isempty(T0)
-            if isempty(T0)
-              warning('T0 is empty');
-            end
-            % fprintf(1,'%d: %s - empty plot\n', i, var_name);
-            da.lns{i} = plot(da.axis, nan, nan);
-          else
-            % fprintf(1,'%d: %s - non-empty plot\n', i, var_name);
-            D = dl.num_convert(dr.data_vector(dl.var_name,V));
-            da.lns{i} = plot(da.axis, T-T0, D);
-          end
-        else
-          % fprintf(1,'%d: %s - empty plot\n', i, var_name);
-          da.lns{i} = plot(da.axis,nan,nan);
+      recs = fieldnames(da.linesbyrec);
+      for i=1:length(recs)
+        rec_name = recs{i};
+        if ~strcmp(rec_name,'unassociated')
+          da.update(rec_name);
         end
-        hold(da.axis,'on');
       end
-      hold(da.axis,'off');
-      set(da.axis,'xlim',[-200 0]);
-      ylabel(da.axis,da.label);
-      % drawnow;
     end
 
     function new_record(da, rec_name)
@@ -112,27 +89,41 @@ classdef data_axis < handle
         [T,V] = dr.time_vector(200);
 
         for lnsi = da.linesbyrec.(rec_name)
-          dl = da.lines{lnsi};
-          ln = da.lns{lnsi};
-          D = dl.num_convert(dr.data_vector(dl.var_name,V));
-          w = size(D,2);
-          if w == 1 || dl.interp == 0
-            TI = T - da.dfs.records.max_time;
-            DI = D;
-          else % doing time interpolation
-            h = size(D,1)-1;
-            if h > 0
-              I = ((1:h*w)-1)/w+1;
-              TI = interp1(1:h+1,T,I)-da.dfs.records.max_time;
-              DI = reshape(D(2:end,:)',[],1);
+          if lnsi <= length(da.lines)
+            dl = da.lines{lnsi};
+            if lnsi <= length(da.lns)
+              ln = da.lns{lnsi};
+            else
+              ln = [];
             end
-          end
-          if length(ln) ~= size(DI,2)
-            error('data_line %s ncols %d does not match nlines %d', ...
-              dl.name, size(DI,2), length(ln));
-          end
-          for lni = 1:length(ln)
-            set(ln(lni),'XData',TI,'YData',DI(:,lni));
+            D = dl.num_convert(dr.data_vector(dl.var_name,V));
+            w = size(D,2);
+            if w == 1 || dl.interp == 0
+              TI = T - da.dfs.records.max_time;
+              DI = D;
+            else % doing time interpolation
+              h = size(D,1)-1;
+              if h > 0
+                I = ((1:h*w)-1)/w+1;
+                TI = interp1(1:h+1,T,I)-da.dfs.records.max_time;
+                DI = reshape(D(2:end,:)',[],1);
+              end
+            end
+            if isempty(ln)
+              hold(da.axis,'on');
+              da.lns{lnsi} = plot(da.axis, TI, DI);
+              hold(da.axis,'off');
+              set(da.axis,'xlim',[-200 0]);
+              ylabel(da.axis,da.label);
+            else
+              if length(ln) ~= size(DI,2)
+                error('data_line %s ncols %d does not match nlines %d', ...
+                  dl.name, size(DI,2), length(ln));
+              end
+              for lni = 1:length(ln)
+                set(ln(lni),'XData',TI,'YData',DI(:,lni));
+              end
+            end
           end
         end
       end

@@ -115,7 +115,7 @@ classdef data_line < handle
         case 'discrete'
           n = round(dl.num_convert(val));
           if n >= 0 && n < dl.ndiscrete
-            str = dl.discrete{n};
+            str = dl.discrete{n+1};
           else
             str = dl.txt_invalid;
             return;

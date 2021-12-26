@@ -16,7 +16,7 @@ classdef data_field < handle
   methods
     function df = data_field(dfs, name, fmt, varargin)
       df.dfs = dfs;
-      df.dl = data_line('name',name,'format',fmt,varargin{:});
+      df.dl = dfs.data_line('name',name,'format',fmt,varargin{:});
 
 %       df.fmt = fmt;
 %       df.var_name = var_name;
