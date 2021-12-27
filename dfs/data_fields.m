@@ -778,7 +778,7 @@ classdef data_fields < handle
             rowY(end) = w.RowSpacing;
             colX = zeros(length(w.ColumnWidth)+1,1);
             colwidth = zeros(length(w.ColumnWidth)+1,1);
-            colX(1) = w.ColumnSpacing;
+            colX(1) = w.ColumnSpacing; % Padding w.Padding(1)
             ch = w.Children;
             for i=1:length(ch)
               % indexes into rowY and rowheight are offset by 1, so
@@ -800,6 +800,7 @@ classdef data_fields < handle
               if isscalar(col)
                 colwidth(col) = max(colwidth(col),Pi(3));
               end
+              % Padding: don't calc colX here, just width
               colX(col_M+1) = max(colX(col_M+1), ...
                 colX(col_m)+Pi(3)+w.ColumnSpacing);
               if isscalar(row)
@@ -818,6 +819,7 @@ classdef data_fields < handle
             rowY(i) = max(rowY(i),rowY(i+1)+rowheight(i+1)+w.RowSpacing);
           end
           P(4) = max(P(4),rowY(1));
+          % Padding: use ColumnSpacing for 
           for i=2:length(colX)
             colX(i) = max(colX(i),colX(i-1)+colwidth(i-1)+w.ColumnSpacing);
           end
