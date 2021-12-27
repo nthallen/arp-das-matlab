@@ -9,6 +9,7 @@ classdef data_axis < handle
     dfs % data_fields object
     axis % axes
     label
+    timespan % seconds
   end
   methods
     function da = data_axis(dfs, parent, label)
@@ -22,6 +23,7 @@ classdef data_axis < handle
         da.axis.Toolbar.Visible = 'Off';
       end
       da.label = strrep(label,'_','\_');
+      da.timespan = 200;
     end
     
     function n = add_line(da, dl)
@@ -86,7 +88,7 @@ classdef data_axis < handle
       % update data for each line of each graph
       if isfield(da.linesbyrec,rec_name) % if we are plotting any data
         dr = da.dfs.records.records.(rec_name);
-        [T,V] = dr.time_vector(200);
+        [T,V] = dr.time_vector(da.timespan);
 
         for lnsi = da.linesbyrec.(rec_name)
           if lnsi <= length(da.lines)
@@ -109,11 +111,13 @@ classdef data_axis < handle
                 DI = reshape(D(2:end,:)',[],1);
               end
             end
+            TI = seconds(TI);
             if isempty(ln)
               hold(da.axis,'on');
-              da.lns{lnsi} = plot(da.axis, TI, DI);
+              da.lns{lnsi} = ...
+                plot(da.axis, TI, DI,'DurationTickFormat','mm:ss');
               hold(da.axis,'off');
-              set(da.axis,'xlim',[-200 0]);
+              set(da.axis,'xlim',seconds([-da.timespan 0]));
               ylabel(da.axis,da.label);
             else
               if length(ln) ~= size(DI,2)
