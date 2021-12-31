@@ -114,8 +114,21 @@ classdef data_axis < handle
             TI = seconds(TI);
             if isempty(ln)
               hold(da.axis,'on');
-              da.lns{lnsi} = ...
+              new_lines = ...
                 plot(da.axis, TI, DI,'DurationTickFormat','mm:ss');
+              da.lns{lnsi} = new_lines;
+              for lnsii = 1:length(new_lines)
+                if length(new_lines) > 1
+                  vname = sprintf('%s(%d)',dl.name,lnsii);
+                else
+                  vname = dl.name;
+                end
+                vname = strrep(vname,'_','\_');
+                new_lines(lnsii).DataTipTemplate.DataTipRows(1) = ...
+                  dataTipTextRow(vname,'YData');
+                new_lines(lnsii).DataTipTemplate.DataTipRows(2) = ...
+                  dataTipTextRow('dT','XData');
+              end
               hold(da.axis,'off');
               set(da.axis,'xlim',seconds([-da.timespan 0]));
               ylabel(da.axis,da.label);
