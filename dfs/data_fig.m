@@ -54,6 +54,7 @@ classdef data_fig < handle
       else
         the_axis = dfig.axes{axisnum};
       end
+      % fprintf(1,'axis %s add_line %s\n',the_axis.label,dl.name);
       n = the_axis.add_line(dl);
       if isfield(dfig.recs.(rec_name).vars, dl.name)
         dfig.recs.(rec_name).vars.(dl.name) = [

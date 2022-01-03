@@ -335,6 +335,7 @@ classdef data_fields < handle
       %   pane to an existing data_fig in a group)
       % fignum is the index of the newly created data_fig object (or the
       %   one passed in)
+      % fprintf(1,'show_plot(%s)\n', ID);
       plt = dfs.plot_defs.(ID);
       if plt.isgroup
         if nargin >= 4
@@ -357,7 +358,22 @@ classdef data_fields < handle
         for i = 2:length(plt.lines)
           dfs.new_graph(plt.lines{i},'cur_axes',fignum,axnum);
         end
+        df = dfs.graph_figs{fignum};
+        da = df.axes{axnum};
+        if length(da.lines) ~= length(plt.lines)
+          fprintf(1,'data_axis has %d data_lines, plt has %d\n', ...
+            length(da.lines), length(plt.lines));
+        end
+        if length(da.lns) ~= length(plt.lines)
+          fprintf(1,'data_axis has %d lines, plt has %d\n', ...
+            length(da.lns), length(plt.lines));
+        end
+        if length(da.axis.Children) ~= length(plt.lines)
+          fprintf(1,'axis has %d lines, plt has %d\n', ...
+            length(da.axis.Children), length(plt.lines));
+        end
       end
+      % fprintf(1,'show_plot(%s) return\n', ID);
     end
 
     function graph_selected(dfs)
@@ -451,8 +467,8 @@ classdef data_fields < handle
                   dfs.fields.unassociated.vars.(vars{i});
                 dfs.fields.unassociated.vars = ...
                   rmfield(dfs.fields.unassociated.vars, vars{i});
-                fprintf(1,'Field Var %s associated with rec %s\n', ...
-                  vars{i}, rec_name);
+%                 fprintf(1,'Field Var %s associated with rec %s\n', ...
+%                   vars{i}, rec_name);
               end
             end
           end
@@ -465,32 +481,6 @@ classdef data_fields < handle
                 da.new_record(rec_name);
               end
             end
-
-%             reindex = false;
-%             figi = dfs.figbyrec.unassociated;
-%             for i = 1:length(figi)
-%               dfig = dfs.graph_figs{figi(i)};
-%               if isfield(dfig.recs,'unassociated')
-%                 vars = fieldnames(dfig.recs.unassociated.vars);
-%                 for j = 1:length(vars)
-%                   var_name = vars{j};
-%                   new_rec_name = dfs.check_recname(var_name);
-%                   if ~strcmp(new_rec_name, 'unassociated')
-%                     % now move this record from:
-%                     %   dfig.recs.unassociated.vars.(var_name) to
-%                     %     dfig.recs.(new_rec_name).vars.(var_name)
-%                     dfig.recs.(new_rec_name).vars.(var_name) = ...
-%                       dfig.recs.unassociated.vars.(var_name);
-%                     dfig.recs.unassociated.vars = ...
-%                       rmfield(dfig.recs.unassociated.vars, var_name);
-%                   end
-%                   fprintf(1,'fig(%d) Var %s associated with rec %s\n', ...
-%                     i, vars{j}, new_rec_name);
-%                   reindex = true;
-%                 end
-%               end
-%             end
-%             if reindex; dfs.index_figs; end
           end
         end
       end
@@ -511,21 +501,11 @@ classdef data_fields < handle
       % Now go through graph_figs
       if isfield(dfs.axbyrec,rec_name)
         for axn = dfs.axbyrec.(rec_name)
-          dfs.axes{axn}.update(rec_name)
+          if ~dfs.axes{axn}.updating
+            dfs.axes{axn}.update(rec_name)
+          end
         end
       end
-%       if nargin >= 3
-%         if isempty(dfs.figbyrec) || ~isfield(dfs.figbyrec,rec_name)
-%           fn = [];
-%         else
-%           fn = dfs.figbyrec.(rec_name);
-%         end
-%       else
-%         fn = 1:length(dfs.graph_figs);
-%       end
-%       for i=fn
-%         dfs.graph_figs{i}.update(rec_name);
-%       end
     end
     
     function dfig = new_graph_fig(dfs)

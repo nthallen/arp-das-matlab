@@ -10,6 +10,9 @@ classdef data_axis < handle
     axis % axes
     label
     timespan % seconds
+    bitgraph % boolean
+    updating % boolean
+    reset_ticks % boolean
   end
   methods
     function da = data_axis(dfs, parent, label)
@@ -24,10 +27,25 @@ classdef data_axis < handle
       end
       da.label = strrep(label,'_','\_');
       da.timespan = 200;
+      da.bitgraph = false;
+      da.updating = false;
+      da.reset_ticks = false;
     end
     
     function n = add_line(da, dl)
       % returns the line index
+      if dl.numtype == "bit"
+        if isempty(da.lines)
+          da.bitgraph = true;
+        elseif ~da.bitgraph
+          error('Cannot add bit line %s to analog graph %s', ...
+            dl.name, da.label);
+        end
+      elseif da.bitgraph
+        error('Cannot add non-bit line %s to bit graph %s', ...
+            dl.name, da.label);
+      end
+
       da.lines{end+1} = dl;
       if isfield(da.linesbyrec,dl.rec_name)
         da.linesbyrec.(dl.rec_name) = ...
@@ -41,6 +59,7 @@ classdef data_axis < handle
     end
     
     function redraw(da)
+      da.updating = true;
       recs = fieldnames(da.linesbyrec);
       for i=1:length(recs)
         rec_name = recs{i};
@@ -48,6 +67,7 @@ classdef data_axis < handle
           da.update(rec_name);
         end
       end
+      da.updating = false;
     end
 
     function new_record(da, rec_name)
@@ -111,8 +131,12 @@ classdef data_axis < handle
                 DI = reshape(D(2:end,:)',[],1);
               end
             end
+            if da.bitgraph
+              DI = ((DI-0.5)*0.8) - lnsi + 1;
+            end
             TI = seconds(TI);
             if isempty(ln)
+              da.reset_ticks = true;
               hold(da.axis,'on');
               new_lines = ...
                 plot(da.axis, TI, DI,'DurationTickFormat','mm:ss');
@@ -143,6 +167,23 @@ classdef data_axis < handle
             end
           end
         end
+        if da.reset_ticks && da.bitgraph
+          nlines = length(da.lines);
+          da.axis.YLim = [-nlines+0.5,0.5];
+          da.axis.YTick = -nlines+1:0;
+          da.axis.YGrid = 'on';
+          YTL = cell(nlines,1);
+          for i=1:nlines
+            if ~isempty(da.lns{i})
+              ln = da.lns{i};
+              ln = ln(1); % Just to make sure
+              YTL{nlines+1-i} = ln.DataTipTemplate.DataTipRows(1).Label;
+            end
+          end
+          da.axis.YTickLabel = YTL;
+          da.axis.YTickLabelRotation = -65;
+        end
+        da.reset_ticks = false;
       end
     end
 
