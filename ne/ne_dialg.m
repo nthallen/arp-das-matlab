@@ -200,11 +200,12 @@ elseif strcmp(func,'resize')
   f.xmax = f.xmax + xpad;
   % fp = get(gcf,'Position');
   % f.figpos(2) = f.figpos(2) - (f.ymax-f.ymin-f.figpos(4));
+  movegui(f.fig);
+  f.figpos = f.fig.Position;
   f.figpos(2) = f.figpos(2) + f.ymin;
   f.figpos(3) = f.xmax;
   f.figpos(4) = f.figpos(4) - f.ymin;
   set(f.fig,'Position',f.figpos,'Resize','Off');
-  movegui(f.fig);
   % Adjust x,y of each uicontrol
   if isempty(f.panel)
       c = findobj(f.fig,'type','uicontrol')';
