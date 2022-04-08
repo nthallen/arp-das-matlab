@@ -9,18 +9,22 @@ if nargin < 1
 end
 files = dir(pattern);
 for i = 1:length(files)
-    ifile = files(i).name;
+  ifile = files(i).name;
+  if files(i).bytes > 0
     dataparts = importdata(ifile,',');
     for i = 1:size(dataparts.colheaders, 2)
-        data.(dataparts.colheaders{i}) = dataparts.data(:,i);
+      data.(dataparts.colheaders{i}) = dataparts.data(:,i);
     end
     ext = max(strfind(ifile,'.'));
     if isempty(ext)
-        ofile = [ ifile '.mat' ];
+      ofile = [ ifile '.mat' ];
     else
-        ofile = [ ifile(1:ext) 'mat'];
+      ofile = [ ifile(1:ext) 'mat'];
     end
     save(ofile,'-struct','data');
     fprintf(1,'Converted %s to %s\n', ifile, ofile);
     data = [];
+  else
+    fprintf(1,'Skipped %s (0 bytes)\n', ifile)
+  end
 end
