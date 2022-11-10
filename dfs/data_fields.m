@@ -604,10 +604,10 @@ classdef data_fields < handle
         return;
       end
       dfs.data_conn.n = 0;
-      dfs.data_conn.t = tcpip(hostname, hostport, 'Terminator', '}', ...
-        'InputBufferSize', 65536);
-      dfs.data_conn.t.BytesAvailableFcn = @dfs.BytesAvFcn;
-      dfs.data_conn.t.BytesAvailableFcnMode = 'terminator';
+      dfs.data_conn.t = tcpclient(hostname, hostport);
+        % 'InputBufferSize', 65536);
+      dfs.data_conn.t.configureTerminator('}'+0);
+      dfs.data_conn.t.configureCallback("terminator",@dfs.BytesAvFcn);
       fopen(dfs.data_conn.t);
       dfs.data_conn.connected = 1;
     end
