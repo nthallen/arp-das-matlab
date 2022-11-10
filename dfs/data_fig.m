@@ -19,12 +19,20 @@ classdef data_fig < handle
       dfig.recs = [];
       dfig.axes = {};
       dfig.axis_vec = [];
+      dfig.timespan = 200;
       dfig.mymenu = ...
         uimenu(dfs.gimenu,'Text',sprintf('Figure %d', fignum));
       uimenu(dfig.mymenu,'Text','New axes', ...
         'Callback', { @data_fields.context_callback, ...
         "new_axes", fignum });
       set(dfig.fig,'CloseRequestFcn', @dfig.closereq);
+      m = uimenu(dfig.fig,'Text','Timespan');
+      for ts = [1:5 10 15 30 60 90 120 240] % minutes
+        secs = ts*60;
+        uimenu(m,'Text',sprintf('%d',ts), ...
+          'Callback', @(s,e)set_timespan(dfig,secs), ...
+          'Interruptible', 'off');
+      end
     end
     
     function axnum = new_graph(dfig, rec_name, dl, mode, axisnum)
@@ -41,7 +49,7 @@ classdef data_fig < handle
         dfig.recs.(rec_name).vars = [];
       end
       if mode == "new_fig" || mode == "new_axes"
-        the_axis = data_axis(dfig.dfs, dfig.fig, dl.name);
+        the_axis = data_axis(dfig.dfs, dfig.fig, dl.name, dfig.timespan);
         dfig.axes{end+1} = the_axis;
         if isempty(dfig.axis_vec)
           dfig.axis_vec = dfig.axes{end}.axis;
@@ -87,6 +95,16 @@ classdef data_fig < handle
         end
       end
       linkaxes(dfig.axis_vec,'x');
+    end
+
+    function set_timespan(dfig, ts)
+      if ts ~= dfig.timespan
+        dfig.timespan = ts;
+        for i = 1:length(dfig.axes)
+          da = dfig.axes{i};
+          da.set_timespan(ts);
+        end
+      end
     end
 
     function closereq(dfig, ~, ~)

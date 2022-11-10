@@ -15,7 +15,7 @@ classdef data_axis < handle
     reset_ticks % boolean
   end
   methods
-    function da = data_axis(dfs, parent, label)
+    function da = data_axis(dfs, parent, label, ts)
       da.axis_index = [];
       da.dfs = dfs;
       da.linesbyrec = [];
@@ -26,7 +26,7 @@ classdef data_axis < handle
         da.axis.Toolbar.Visible = 'Off';
       end
       da.label = strrep(label,'_','\_');
-      da.timespan = 200;
+      da.timespan = ts;
       da.bitgraph = false;
       da.updating = false;
       da.reset_ticks = false;
@@ -154,7 +154,11 @@ classdef data_axis < handle
                   dataTipTextRow('dT','XData');
               end
               hold(da.axis,'off');
-              set(da.axis,'xlim',seconds([-da.timespan 0]));
+              try
+                set(da.axis,'xlim',seconds([-da.timespan 0]));
+              catch ME
+                fprintf(1,'%s\n',ME.identifier);
+              end
               ylabel(da.axis,da.label);
             else
               if length(ln) ~= size(DI,2)
@@ -190,6 +194,12 @@ classdef data_axis < handle
     function deconstruct(da)
       da.dfs.dereference_axis(da);
       delete(da.axis);
+    end
+
+    function set_timespan(da, ts)
+      da.timespan = ts;
+      set(da.axis,'xlim',seconds([-da.timespan 0]));
+      da.redraw();
     end
 
   end
