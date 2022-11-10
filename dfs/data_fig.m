@@ -8,6 +8,7 @@ classdef data_fig < handle
     recs % maps rec_name to axes and line where specific vars are displayed
     axis_vec % just the axes
     mymenu % uimenu for this figure
+    timespan % seconds
   end
   methods
     function dfig = data_fig(dfs, fignum)
