@@ -351,12 +351,16 @@ classdef data_fields < handle
       else
         if isempty(plt.lines); return; end
         if nargin >= 3
-          [fignum,axnum] = dfs.new_graph(plt.lines{1},'new_axes',fign_in);
+          [fignum,axnum] = ...
+            dfs.new_graph(plt.lines{1},'new_axes',fign_in, ...
+            [], plt.opts.custom_axis);
         else
-          [fignum,axnum] = dfs.new_graph(plt.lines{1},'new_fig');
+          [fignum,axnum] = dfs.new_graph(plt.lines{1},'new_fig', ...
+            [], [], plt.opts.custom_axis);
         end
         for i = 2:length(plt.lines)
-          dfs.new_graph(plt.lines{i},'cur_axes',fignum,axnum);
+          dfs.new_graph(plt.lines{i},'cur_axes', ...
+            fignum, axnum, plt.opts.custom_axis);
         end
         df = dfs.graph_figs{fignum};
         da = df.axes{axnum};
@@ -535,8 +539,9 @@ classdef data_fields < handle
       dfs.figbyrec = fbr;
     end
     
-    function [fignum, axnum] = new_graph(dfs, dl, mode, fignum, axisnum)
-      % [fignum, axnum] = dfs.new_graph(dl, mode, fign, axisnum)
+    function [fignum, axnum] = ...
+        new_graph(dfs, dl, mode, fignum, axisnum, axis_func)
+      % [fignum, axnum] = dfs.new_graph(dl, mode, fign, axisnum, axis_func)
       % dl is the data_line object
       % mode is one of 'new_fig', 'cur_axes' or 'new_axes'
       % fign is the fignum previously returned by new_graph(...,'new_fig').
@@ -556,7 +561,7 @@ classdef data_fields < handle
         end
       end
       dl.rec_name = dfs.check_recname(dl.var_name, dl.rec_name);
-      axisnum = dfig.new_graph(dl.rec_name, dl, mode, axisnum);
+      axisnum = dfig.new_graph(dl.rec_name, dl, mode, axisnum, axis_func);
       fignum = dfig.fignum;
       if mode == "new_fig"
         dfs.graph_figs{dfig.fignum} = dfig;
@@ -659,7 +664,7 @@ classdef data_fields < handle
         return;
       end
       dfs.data_conn.connected = 0;
-      fclose(dfs.data_conn.t);
+      % fclose(dfs.data_conn.t);
       delete(dfs.data_conn.t);
       dfs.data_conn.t = [];
     end
@@ -699,7 +704,7 @@ classdef data_fields < handle
       % rec_name = df.rec_name;
       % var_name = df.dl.name;
       dfs = df.dfs;
-      dfs.new_graph(df.dl, mode, fignum, axisnum);
+      dfs.new_graph(df.dl, mode, fignum, axisnum, '');
     end
 
     function [P,resized_out] = resize_widget(w,resized)

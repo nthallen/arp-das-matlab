@@ -32,8 +32,7 @@ classdef data_axis < handle
       da.reset_ticks = false;
     end
     
-    function n = add_line(da, dl)
-      % returns the line index
+    function check_validity(da, dl)
       if dl.numtype == "bit"
         if isempty(da.lines)
           da.bitgraph = true;
@@ -45,6 +44,11 @@ classdef data_axis < handle
         error('Cannot add non-bit line %s to bit graph %s', ...
             dl.name, da.label);
       end
+    end
+
+    function n = add_line(da, dl)
+      % returns the line index
+      da.check_validity(dl);
 
       da.lines{end+1} = dl;
       if isfield(da.linesbyrec,dl.rec_name)

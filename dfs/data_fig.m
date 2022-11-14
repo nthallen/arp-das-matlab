@@ -35,7 +35,7 @@ classdef data_fig < handle
       end
     end
     
-    function axnum = new_graph(dfig, rec_name, dl, mode, axisnum)
+    function axnum = new_graph(dfig, rec_name, dl, mode, axisnum, axis_func)
       % axnum = new_graph(df, rec_name, dl, mode, axisnum)
       % use the figure's mode to decide where to put it
       % for starters, always create a new axis
@@ -49,7 +49,10 @@ classdef data_fig < handle
         dfig.recs.(rec_name).vars = [];
       end
       if mode == "new_fig" || mode == "new_axes"
-        the_axis = data_axis(dfig.dfs, dfig.fig, dl.name, dfig.timespan);
+        if isempty(axis_func)
+          axis_func = @data_axis;
+        end
+        the_axis = axis_func(dfig.dfs, dfig.fig, dl.name, dfig.timespan);
         dfig.axes{end+1} = the_axis;
         if isempty(dfig.axis_vec)
           dfig.axis_vec = dfig.axes{end}.axis;

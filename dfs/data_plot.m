@@ -34,6 +34,7 @@ classdef data_plot < handle
       plt.opts.linestyle = '-';
       plt.opts.label = '';
       plt.opts.ylabel = '';
+      plt.opts.custom_axis = '';
       for i = 1:2:length(varargin)-1
         fld = varargin{i};
         if isfield(plt.opts, fld)
