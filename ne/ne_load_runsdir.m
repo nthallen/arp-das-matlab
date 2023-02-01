@@ -40,11 +40,6 @@ else
     else
         exppath = fileparts(ST(1).file);
     end
-    newfile = fullfile(exppath, [ pdir '.m']);
-    nfd = fopen(newfile,'w');
-    fprintf(nfd,'function path = %s\n', pdir);
-    fprintf(nfd,'%% path = %s;\n', pdir);
-    fprintf(nfd,'path = ''%s'';\n', newpdir);
-    fclose(nfd);
+    write_ne_runsdir(pdir, exppath, newpdir)
     runsdir = newpdir;
 end
