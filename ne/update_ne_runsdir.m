@@ -30,7 +30,8 @@ else
 end
 
 new_runsdir = uigetdir(old_runsdir, ...
-  'Where are run directories for engineering data located?');
+  sprintf('Where will engineering data be located (%s)?', ...
+  runsdir_funcname));
 if isnumeric(new_runsdir)
   warning('HUARP:GENUI', 'No directory selected, no data will be viewable');
   return;
