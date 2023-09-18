@@ -21,7 +21,7 @@ for i = 1:length(files)
     else
       ofile = [ ifile(1:ext) 'mat'];
     end
-    save(ofile,'-struct','data');
+    save(ofile,'-struct','data','-v7.3');
     fprintf(1,'Converted %s to %s\n', ifile, ofile);
     data = [];
   else
