@@ -77,7 +77,13 @@ classdef data_record < handle
         dr.ix = (1:dr.n_alloc)';
       end
       for i = 1:dr.n_flds
-        dr.data.(flds{i})(dr.n_recd,:) = str.(flds{i});
+        try
+          dr.data.(flds{i})(dr.n_recd,:) = str.(flds{i});
+        catch
+          fprintf(1,'Assignment error for %s(%d): LHS:[%dx%d] RHS:[%dx%d]\n', ...
+            flds{i}, dr.n_recd, size(dr.data.(flds{i})), size(str.(flds{i})));
+          dr.data.(flds{i})(dr.n_recd,:) = NaN;
+        end
       end
     end
     

@@ -55,6 +55,7 @@ classdef data_fields < handle
     connectmenu % connect menu
     gimenu % The 'Graph in:' submenu
     data_conn % The tcpip connection
+    in_callback % For debugging
   end
   methods
     function dfs = data_fields(varargin)
@@ -642,7 +643,12 @@ classdef data_fields < handle
     
     function BytesAvFcn(dfs,~,~)
       % BytesAvFcn(dfs, src, eventdata)
+      if dfs.in_callback
+        fprintf(1,'BytesAvFcn is reentrant\n');
+      end
+      dfs.in_callback = 1;
       if dfs.data_conn.connected == 0
+        dfs.in_callback = 0;
         return;
       end
       s = fgets(dfs.data_conn.t);
@@ -657,6 +663,7 @@ classdef data_fields < handle
           dfs.process_record(rec, dp);
         end
       end
+      dfs.in_callback = 0;
     end
     
     function disconnect(dfs)
