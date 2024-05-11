@@ -762,7 +762,8 @@ classdef data_fields < handle
 %           end
           while uigrid_working
             drawnow;
-            drawnow;
+            %drawnow;
+            pause(1);
             uigrid_working = false;
             P = [NaN NaN 0 0];
             rowY = zeros(length(w.RowHeight)+1,1);

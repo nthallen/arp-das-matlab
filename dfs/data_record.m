@@ -78,7 +78,11 @@ classdef data_record < handle
       end
       for i = 1:dr.n_flds
         try
-          dr.data.(flds{i})(dr.n_recd,:) = str.(flds{i});
+          val = str.(flds{i});
+          if isempty(val)
+            val = NaN;
+          end
+          dr.data.(flds{i})(dr.n_recd,:) = val;
         catch
           fprintf(1,'Assignment error for %s(%d): LHS:[%dx%d] RHS:[%dx%d]\n', ...
             flds{i}, dr.n_recd, size(dr.data.(flds{i})), size(str.(flds{i})));
