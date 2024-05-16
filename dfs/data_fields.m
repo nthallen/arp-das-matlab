@@ -598,6 +598,9 @@ classdef data_fields < handle
         dfs.connectmenu = uimenu(m, 'Text', 'Connect', ...
           'Callback', @(s,e)do_connect(dfs,s,e,hostname,port), ...
           'Interruptible', 'off');
+      else
+        dfs.connectmenu.Callback = ...
+          @(s,e)do_connect(dfs,s,e,hostname,port);
       end
     end
     
@@ -763,7 +766,7 @@ classdef data_fields < handle
           while uigrid_working
             drawnow;
             %drawnow;
-            pause(1);
+            %pause(1);
             uigrid_working = false;
             P = [NaN NaN 0 0];
             rowY = zeros(length(w.RowHeight)+1,1);
