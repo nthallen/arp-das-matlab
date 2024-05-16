@@ -13,6 +13,7 @@ classdef data_fig < handle
   methods
     function dfig = data_fig(dfs, fignum)
       dfig.fig = figure;
+      dfig.fig.Name = dfs.fig.Name;
       dfig.fignum = fignum;
       dfig.dfs = dfs;
       dfig.drs = dfs.records;
