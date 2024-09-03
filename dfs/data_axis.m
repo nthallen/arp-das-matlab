@@ -1,7 +1,7 @@
 classdef data_axis < handle
   properties
     % lines and lns are the same length
-    % recs.(rec_name) is an array of indices into lines and lns
+    % linesbyrec.(rec_name) is an array of indices into lines and lns
     axis_index % index into da.dfs.axes
     linesbyrec % struct mapping rec_name to indices into lines & lns
     lines % data_line objects

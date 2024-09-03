@@ -34,12 +34,20 @@ classdef data_record < handle
         dr.n_flds = length(flds);
         dr.ix = (1:dr.n_alloc)';
         for i = 1:dr.n_flds
-          w = length(str.(flds{i}));
+          [h,w] = size(str.(flds{i}));
           dr.dfs.varinfo.(flds{i}).w = w;
+          dr.dfs.varinfo.(flds{i}).h = h;
+          if h==1
+            dr.data.(flds{i}) = zeros(dr.min_alloc,w) * NaN;
+          elseif w > 1
+            error('Record %s variable %s unsupported dimension [%d,%d]', ...
+              dr.record_name, flds{i}, h, w);
+          else %
+            dr.data.(flds{i}) = [];
 %           if ~isfield(dr.dfs.varinfo.(flds{i}),'interp')
 %             dr.dfs.varinfo.(flds{i}).interp = 1;
 %           end
-          dr.data.(flds{i}) = zeros(dr.min_alloc,w) * NaN;
+          end
         end
         if ~isfield(dr.data, dr.time_name)
           error('Structure for record %s missing time var %s', ...
@@ -69,24 +77,30 @@ classdef data_record < handle
       dr.n_recd = dr.n_recd+1;
       if dr.n_recd > dr.n_alloc
         for i = 1:length(flds)
-          dr.data.(flds{i}) = [
-            dr.data.(flds{i});
-            zeros(dr.min_alloc,dr.dfs.varinfo.(flds{i}).w) * NaN ];
+          if dr.dfs.varinfo.(flds{i}).h == 1
+            dr.data.(flds{i}) = [
+              dr.data.(flds{i});
+              zeros(dr.min_alloc,dr.dfs.varinfo.(flds{i}).w) * NaN ];
+          end
         end
         dr.n_alloc = dr.n_alloc + dr.min_alloc;
         dr.ix = (1:dr.n_alloc)';
       end
       for i = 1:dr.n_flds
-        try
-          val = str.(flds{i});
-          if isempty(val)
-            val = NaN;
+        val = str.(flds{i});
+        if dr.dfs.varinfo.(flds{i}).h == 1
+          try
+            if isempty(val)
+              val = NaN;
+            end
+            dr.data.(flds{i})(dr.n_recd,:) = val;
+          catch
+            fprintf(1,'Assignment error for %s(%d): LHS:[%dx%d] RHS:[%dx%d]\n', ...
+              flds{i}, dr.n_recd, size(dr.data.(flds{i})), size(str.(flds{i})));
+            dr.data.(flds{i})(dr.n_recd,:) = NaN;
           end
-          dr.data.(flds{i})(dr.n_recd,:) = val;
-        catch
-          fprintf(1,'Assignment error for %s(%d): LHS:[%dx%d] RHS:[%dx%d]\n', ...
-            flds{i}, dr.n_recd, size(dr.data.(flds{i})), size(str.(flds{i})));
-          dr.data.(flds{i})(dr.n_recd,:) = NaN;
+        else
+          dr.data.(flds{i}) = val;
         end
       end
     end

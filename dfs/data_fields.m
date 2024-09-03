@@ -37,11 +37,14 @@ classdef data_fields < handle
     % struct mapping var_name to struct with details
     %   rec_name: The record containing the variable
     %   w: The variable width for arrays. Defaults to 0 (undefined)
-    % If a variable reports multiple values in each record, there are two
+    %   h: The variable height for scan data.
+    % If a variable reports multiple values as a row in each record, there are two
     % possible interpretations. If interp is false, each value is treated
     % as an independent variable and plotted as multiple lines. If interp
     % is true, the values are treated as multiple readings of the same
     % sensor at a faster rate than the record is reported.
+    % If a variable reports multiple values as a column, it is treated as
+    % scan data, and for now, only the latest values will be saved.
     varinfo
     figbyrec % struct mapping rec_name to graph_figs index
     graph_figs % cell array of data_fig objects
