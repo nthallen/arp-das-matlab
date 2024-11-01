@@ -13,8 +13,14 @@ for i = 1:length(files)
   try
     if files(i).bytes > 0
       dataparts = importdata(ifile,',');
+      data = [];
       for i = 1:size(dataparts.colheaders, 2)
-        data.(dataparts.colheaders{i}) = dataparts.data(:,i);
+        if isfield(data, dataparts.colheaders{i})
+          data.(dataparts.colheaders{i}) = [
+            data.(dataparts.colheaders{i}), dataparts.data(:,i); ];
+        else
+          data.(dataparts.colheaders{i}) = dataparts.data(:,i);
+        end
       end
       ext = max(strfind(ifile,'.'));
       if isempty(ext)
