@@ -44,7 +44,7 @@ classdef data_line < handle
       dl.bit_mask = [];
       dl.scale = [];
       dl.offset = [];
-      dl.interp = true;
+      dl.interp = false;
       dl.discrete = {};
       dl.line_attrs = {};
       dl.update(varargin{:});
