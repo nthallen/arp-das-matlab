@@ -1,4 +1,4 @@
-function T30KXUX( Rpullup, scale );
+function T30KXKUX( Rpullup, scale )
 % T30KXUX( Rpullup[, scale ] );
 % Generates Extended Temperature Calibration for
 %   30K Thermistor
