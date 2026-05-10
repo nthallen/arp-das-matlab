@@ -16,6 +16,9 @@ uimenu(h,'label','On','Callback','zoom off; zoom on;');
 uimenu(h,'label','Off','Callback','zoom off;');
 uimenu(h,'label','X','Callback','zoom off; zoom xon;');
 uimenu(h,'label','Y','Callback','zoom off; zoom yon;');
+if ~isempty(which("axestoolbarsvisibility"))
+    uimenu(h,'label','Hide','Callback','axestoolbarsvisibility()')
+end
 if use_save
     uimenu(h,'label','Save X','Callback','matchx([],1);');
     uimenu(h,'label','Restore X','Callback','matchx([],2);');

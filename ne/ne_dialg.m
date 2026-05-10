@@ -95,7 +95,7 @@ if strcmp(func,'add')
   end
   p = [ x f.y dims ];
   set(h,'Position', p );
-  
+
   if f.y < f.ymin
     f.ymin = f.y;
   end
@@ -176,7 +176,7 @@ elseif strcmp(func,'resize')
   end
   ce = [ xpad y boxwid 0 ] + [ 0 0 ce(3) ce(4) ];
   set(f.prtfmt, 'Position', ce );
-  
+
   if f.adhocgrps
       f.prtsel = uicontrol(f.fig,'String','Graph Selected', ...
           'Callback','ne_adhoc;');
@@ -201,7 +201,7 @@ elseif strcmp(func,'resize')
   % fp = get(gcf,'Position');
   % f.figpos(2) = f.figpos(2) - (f.ymax-f.ymin-f.figpos(4));
   movegui(f.fig);
-  f.figpos = f.fig.Position;
+  f.figpos = get(f.fig,'Position');
   f.figpos(2) = f.figpos(2) + f.ymin;
   f.figpos(3) = f.xmax;
   f.figpos(4) = f.figpos(4) - f.ymin;
@@ -232,7 +232,7 @@ elseif strcmp(func,'resize')
       f.panelpos(3) = f.xmax;
       f.panelpos(4) = f.panelpos(4) - f.pymin;
       set(f.panel,'Position',f.panelpos);
-      %adjust ypos of each child uicontrol by -f.pymin 
+      %adjust ypos of each child uicontrol by -f.pymin
       for panel = f.panel
         c = findobj(panel,'type','uicontrol')';
         for ctrl = c
