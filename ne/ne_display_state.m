@@ -28,7 +28,7 @@ end
 if ~isempty(label_list)
     YData = h.YData;
     [C, ~, ic] = unique(YData);
-    labels = label_list(C+1);
+    labels = strrep(label_list(C+1),'_','\_');
     h.YData = ic;
     N = length(C);
     % C are the N unique values
