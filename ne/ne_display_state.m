@@ -2,7 +2,8 @@ function ne_display_state(h, varname)
 % h Line object from graph
 % varname: variable name and basename of a MAT file in which the definition
 % might be found in the rundir.
-set(h,'LineStyle','none','Marker','.');
+set(h, 'LineStyle', 'none');
+set(h, 'Marker', '.');
 %   ax = get(h(1),'parent');
 %   set(ax,'ylim',[0 800]);
 
@@ -16,20 +17,20 @@ label_list = {};
 label_file = [ varname '.labels' ];
 try
     fname = [ getrundir filesep label_file ];
-    label_list = readlines(fname, 'EmptyLineRule','skip');
+    label_list = ne_readlines(fname);
 catch
 end
 if isempty(label_list)
     fname = which(label_file);
     if ~isempty(fname)
-        label_list = readlines(fname, 'EmptyLineRule','skip');
+        label_list = ne_readlines(fname);
     end
 end
 if ~isempty(label_list)
-    YData = h.YData;
+    YData = get(h, 'YData');
     [C, ~, ic] = unique(YData);
     labels = strrep(label_list(C+1),'_','\_');
-    h.YData = ic;
+    set(h, 'YData') = ic;
     N = length(C);
     % C are the N unique values
     % ic are the indexes within C for each of the YData
@@ -41,6 +42,6 @@ if ~isempty(label_list)
     % load('260319.1/IFSCStat.mat');
     % The YData values are indexes into a zero-based array,
     % but IFSCStat is one-based, so we need to add 1:
-    ax = h.Parent;
+    ax = get(h, 'Parent');
     set(ax,'YTick', 1:N, 'YTickLabel', labels, 'ylim', [0.75 N+0.25]);
 end

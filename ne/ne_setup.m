@@ -60,9 +60,13 @@ end
 
 if args.HoldFig == 0
   fg = figure;
-  hda = datacursormode(fg);
-  set(hda, 'UpdateFcn', @ne_data_cursor_text_func);
-  datacursormode(fg, 'off');
+  try
+    hda = datacursormode(fg);
+    set(hda, 'UpdateFcn', @ne_data_cursor_text_func);
+    datacursormode(fg, 'off');
+  catch
+
+  end
   orient tall;
   ax = axes('position',[0 0 1 1],'Visible','off');
   h1 = text( 1, .98, getrun );
