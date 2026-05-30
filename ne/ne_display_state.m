@@ -2,8 +2,7 @@ function ne_display_state(h, varname)
 % h Line object from graph
 % varname: variable name and basename of a MAT file in which the definition
 % might be found in the rundir.
-set(h, 'LineStyle', 'none');
-set(h, 'Marker', '.');
+set(h,'LineStyle','none','Marker','.');
 %   ax = get(h(1),'parent');
 %   set(ax,'ylim',[0 800]);
 
@@ -30,7 +29,7 @@ if ~isempty(label_list)
     YData = get(h, 'YData');
     [C, ~, ic] = unique(YData);
     labels = strrep(label_list(C+1),'_','\_');
-    set(h, 'YData') = ic;
+    set(h, 'YData', ic);
     N = length(C);
     % C are the N unique values
     % ic are the indexes within C for each of the YData

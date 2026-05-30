@@ -13,10 +13,7 @@ if isempty(arcvar)
     Tref = 'NaN';
   end
 else
-  delim = max(findstr( arcvar, filesep ));
-  if ~isempty(delim)
-    arcvar = arcvar([delim+1:length(arcvar)]);
-  end
+  [~, arcvar, ~] = fileparts(arcvar);
   ref = [ arcvar '.' vars{i} ];
   if nargout > 1
     Tref = [ arcvar '.T' ];

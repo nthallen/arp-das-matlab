@@ -10,8 +10,8 @@ if nargin < 2
     end
 end
 run = getrundir(co);
-m = max(findstr(filesep,run))+1;
-run = run([m:length(run)]);
+[~, name, ext] = fileparts(run);
+run = [name ext];
 if noheader == 0
   if run(length(run)) == 'F'
     run = [ 'Flight ' run(1:length(run)-1) ];
