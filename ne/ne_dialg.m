@@ -14,6 +14,7 @@ if nargin == 0
   error('Arguments required for ne_dialg()');
 elseif ischar(ttl)
   f.fig = figure;
+  set(f.fig, 'Visible', 'off');
   if nargin < 2
       func = 0;
   end
