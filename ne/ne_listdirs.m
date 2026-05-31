@@ -5,6 +5,7 @@ end
 [~,rem] = strtok(pdir,'\/');
 if isempty(rem)
   set(f.fig, 'visible', 'off');
+  uimenu('Label', 'ChDir', 'Callback', [ 'update_ne_runsdir ' pdir ] );
   pdir = ne_load_runsdir(pdir, 2);
 end
 files = dir( pdir );
