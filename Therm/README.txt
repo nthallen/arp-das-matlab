@@ -11,6 +11,9 @@ This directory addresses two different issues relating to thermistors:
   pumpt.m   Another example (T30K pulled up by 200K)
   T10m.m    Reads T10m.dat, write calib.tmc
   T30K75.m  T30K pulled up by 75K
+  T10K_TE_55016.m Generate cal for uDACS_B AD7770_T10KT100KU for DCOTSS 2022
+  T10K_TE_44031.m Generate cal for uDACS_B AD7770_T10KT100KU for INSPYRE 2026
+  HCl_Amb_Temp_Sensor.m Cal for HUSCE
 
   gencal2.m     Newer version of gencal, etc. that automatically determines
     pickpts2.m  threshold values
@@ -36,4 +39,6 @@ This directory addresses two different issues relating to thermistors:
   TM457.mat Thermometrics Curves 4 (10K), 5 (30K & 50K) and 7 (100K)
   C00385.dat RTD Resistance curve (AD16_RTD)
   CRflow.txt Steinhart-hart coefficients and pullup resistances for CRflow studies
-  
+  YSI_R_vs_T.dat C, R for 10K used for DPOPS RingT thermistors during DCOTSS 2022
+  TE_44031.dat C, R for 10K replacement for TE_55016 for INSPYRE 2026
+  YSI_R_vs_T2.dat C, R for an ambient thermistor used on HUSCE

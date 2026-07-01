@@ -1,14 +1,16 @@
 %%
 cd C:\Users\nort\Documents\Documents\SW\arp-das-matlab\Therm
 %%
-% te_55016 10K thermistor
+% TE 44031 10K Thermistor replacement for te_55016 10K thermistor
+% Columns in TE_44031.dat are Celcius and KOhms
+%
 % AD7770 is a 24-bit bipolar converter, so for positive voltages,
 % we have 23-bit resolution
 % If we go with 12-bit as OK for gencal2, then the scaling should
 % be 2^11.
-YSI = load('YSI_R_vs_t.dat');
-C = YSI(:,1);
-Rt = YSI(:,2);
+TE = load('TE_44031.dat');
+C = TE(:,1);
+Rt = TE(:,2) * 1000;
 Rpullup = 100e3;
 %%
 % Produce TMC lookup table
@@ -17,8 +19,8 @@ gencalbits = 12;
 scale = 2^(Nbits-gencalbits);
 Cts = 2^gencalbits * Rt ./ (Rt + Rpullup );
 Name = [ 'T10K' num2str(floor(Rpullup/1000)) 'KU' ];
-Desc=[ '10K Thermistor pulled up by ' num2str(Rpullup/1000) 'K' ];
-gencal2( C, Cts, scale, Name, Desc, [ 'AD7770_' Name ', CELCIUS'], 2 );
+Desc=[ '10K TE 44031 Thermistor pulled up by ' num2str(Rpullup/1000) 'K' ];
+gencal2( C, Cts, scale, Name, Desc, [ 'AD7770_' Name ', uDACS_CELCIUS'], 2 );
 %%
 % Generate Steinhart/Hart coefficients
 V = C<100;
